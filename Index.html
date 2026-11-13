@@ -1,0 +1,702 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>SR-PDS · Sky-Rail Passive Pre-Drying System · Abdur Rauf · IBA, University of Dhaka</title><style>
+:root{--bg:#dfe5ec;color-scheme:light dark;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
+@media(prefers-color-scheme:dark){:root:not([data-theme="light"]){--bg:#1b2431}}
+:root[data-theme="dark"]{--bg:#1b2431}
+html{height:100%;scroll-padding-top:env(safe-area-inset-top,0px)}
+body{height:100%;margin:0;background:var(--bg);overflow:hidden;font:13px/1.4 system-ui,-apple-system,"Segoe UI",Roboto,sans-serif}
+#mapbox{position:relative;width:100%;height:100%;overflow:hidden;background:var(--bg)}
+#cv3{position:absolute;inset:0;width:100%;height:100%;touch-action:none;cursor:grab;display:block}
+#ovl{position:absolute;inset:0;pointer-events:none;overflow:hidden}
+.ov{position:absolute;left:0;top:0;white-space:nowrap;font:600 12px/1.2 system-ui,Arial,sans-serif;will-change:transform}
+.ov.rc.z{background:none;color:#26303d;font-size:10px;padding:0;text-shadow:0 1px 2px #fff,0 0 4px #fff;font-size:11px;font-weight:700}
+#mapbox.near .ov.rc.z{display:block}
+.ov.ml{display:none;background:#0b1747cc;color:#fff;border-radius:999px;padding:1px 6px;font-size:10.5px;font-weight:500}
+#mapbox.near .ov.ml{display:block}
+.ov.ex{background:#0b8a4d;color:#fff;border-radius:3px;padding:1px 6px;font-size:11px}
+.ov.pds{background:#e8590c;color:#fff;border:2px solid #fff;border-radius:999px;padding:3px 9px;font-size:11px;box-shadow:0 2px 8px #0007}
+.ov.pds.g{background:#1f9d5c}.ov.pds.b{background:#1f6fd0}.ov.pds.w{background:#c2410c}
+.nolib{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;text-align:center;padding:30px;color:#26303d}
+.chip{position:absolute;background:#16213acc;color:#e9eff7;border:1px solid #2a3d63;border-radius:8px;padding:5px 10px;font-size:12px}
+#hint{left:10px;top:10px;max-width:calc(100% - 70px)}
+#cap{left:10px;bottom:10px;display:none}
+#zoom{position:absolute;right:10px;top:10px;display:flex;flex-direction:column;gap:6px}
+#zoom button{width:38px;height:38px;font-size:18px;padding:0;background:#16213acc;color:#e9eff7;border:1px solid #2a3d63;border-radius:8px;cursor:pointer}
+#zoom button#pdsb{font-size:10px;font-weight:700;background:#e8590c;border-color:#fff}
+#zoom button#pdsb.off{background:#16213acc;border-color:#2a3d63;color:#9fb0c6}
+html,body{background:#0b1220!important;overflow:hidden}
+#zoom{display:none!important}
+body.free #zoom{display:flex!important}
+#zin,#zout,#zfit{display:none}
+body.free #zin,body.free #zout,body.free #zfit{display:block}
+#hint{display:none}
+body.free #hint{display:block}
+body:not(.free) .ov.pds{display:none!important}
+.ov.pin{opacity:0;transition:opacity .6s;z-index:3;margin-top:-16px;background:#0f1d38;color:#fff;border:1.5px solid #e8590c;border-radius:10px;padding:4px 10px 4px 5px;font:600 calc(var(--u,1)*12px)/1.25 system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;box-shadow:0 4px 14px rgba(0,0,0,.4)}
+.ov.pin.on{opacity:1}
+.ov.pin::after{content:"";position:absolute;left:50%;top:100%;width:2px;height:14px;background:#e8590c;transform:translateX(-50%)}
+.ov.pin .n{display:inline-block;width:19px;height:19px;border-radius:50%;background:#e8590c;color:#fff;text-align:center;font:800 11px/19px system-ui;margin-right:6px}
+.ov.pin:not(:has(.n)){padding-left:10px}
+
+#boot{position:fixed;inset:0;z-index:50;background:#0b1220;color:#dfe8f5;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:14px;font:600 15px system-ui,sans-serif;transition:opacity .8s}
+#boot .sp{width:38px;height:38px;border:3px solid #26344f;border-top-color:#e8590c;border-radius:50%;animation:spin 1s linear infinite}
+@keyframes spin{to{transform:rotate(360deg)}}
+
+/* ===== the slide ===== */
+#slide{position:fixed;overflow:hidden;background:#eef2f7;color:#12203a;font:calc(var(--u,1)*15px)/1.45 system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;--fh:2.7em;--pad:.9em;--pw:40%;--mh:40%;box-shadow:0 20px 80px rgba(0,0,0,.55)}
+#slide #mapbox{position:absolute;left:var(--pw);top:var(--pad);right:var(--pad);bottom:calc(var(--fh) + var(--pad));width:auto;height:auto;border-radius:.9em;box-shadow:0 0 0 1px #d3dce8,0 .6em 2em rgba(15,29,56,.18)}
+body.portrait #slide #mapbox{left:0;top:0;right:0;bottom:auto;height:var(--mh);border-radius:0;box-shadow:none}
+body.free #slide #mapbox{left:0;top:0;right:0;bottom:var(--fh);width:auto;height:auto;border-radius:0;box-shadow:none}
+body.free #panel,body.free #figcap{display:none}
+#figcap{position:absolute;left:.7em;bottom:.7em;z-index:4;background:rgba(15,29,56,.9);color:#fff;border-radius:.5em;padding:.35em .75em;font-size:.78em;letter-spacing:.03em;pointer-events:none}
+#figcap b{color:#ff9a63;letter-spacing:.1em;margin-right:.4em}
+#sfoot{position:absolute;left:0;right:0;bottom:0;height:var(--fh);box-sizing:border-box;background:#0f1d38;border-top:.2em solid #e8590c;color:#e6edf8;display:flex;align-items:center;justify-content:space-between;gap:1em;padding:0 1.4em;font-size:.8em;white-space:nowrap}
+#sfoot b{color:#fff;font-size:1.1em}
+#sfoot i{font-style:normal;color:#e8590c;margin:0 .8em}
+#sfoot .pg{color:#aebcd2}
+#sfoot .pg b{color:#ff9a63}
+#sfoot .who2{overflow:hidden;text-overflow:ellipsis}
+
+#panel{position:absolute;left:0;top:0;bottom:var(--fh);width:var(--pw);box-sizing:border-box;display:flex;background:var(--bg);color:var(--fg);--bg:#fff;--fg:#12203a;--mut:#56667f;--card:#f2f5f9;--line:#e1e8f0;--acc:#e8590c}
+#panel::before{content:"";position:absolute;left:0;top:0;bottom:0;width:.5em;background:var(--acc);z-index:2}
+#panel.cover{--bg:#0f1d38;--fg:#fff;--mut:#aebcd2;--card:rgba(255,255,255,.07);--line:rgba(255,255,255,.14)}
+body.portrait #panel{left:0;right:0;width:auto;top:var(--mh)}
+#card{overflow-y:auto;scrollbar-width:thin;width:100%;box-sizing:border-box;padding:1.5em 1.6em 1em 2.1em}
+.k{font:800 .78em/1 inherit;letter-spacing:.16em;color:var(--acc);text-transform:uppercase;margin-bottom:.8em}
+h1.t{font:800 2.05em/1.12 inherit;margin:0 0 .35em;letter-spacing:-.01em;color:var(--fg)}
+#panel.cover h1.t{font-size:2.5em}
+h1.t em{font-style:normal;color:#ff8a4c}
+.rule{width:3em;height:.24em;background:var(--acc);border-radius:.2em;margin:0 0 1em}
+.lead{font-size:1.1em;color:var(--mut);margin:0 0 .4em}
+.presenter{margin-top:1.4em;padding-top:1em;border-top:1px solid var(--line)}
+.presenter small{display:block;font:800 .72em/1 inherit;letter-spacing:.16em;text-transform:uppercase;color:#ff8a4c;margin-bottom:.5em}
+.presenter b{display:block;font-size:1.6em;color:var(--fg);line-height:1.1}
+.presenter span{display:block;color:var(--mut);font-size:1em;margin-top:.2em}
+.thanks{font:800 1.3em/1.2 inherit;color:var(--acc);margin:.8em 0 0}
+.hintp{font-size:.8em;color:var(--mut);margin:.8em 0 0;opacity:.8}
+.rv{opacity:0;transform:translateY(14px);transition:opacity .6s ease,transform .6s ease;transition-delay:calc(var(--i,0)*70ms + 150ms)}
+#card.in .rv{opacity:1;transform:none}
+.stats{display:grid;grid-template-columns:1fr 1fr;gap:.6em;margin:.8em 0}
+.stats.s3{grid-template-columns:repeat(3,1fr)}
+.stat{background:var(--card);border:1px solid var(--line);border-radius:.8em;padding:.7em .8em}
+.stat b{display:block;font:800 1.9em/1.05 inherit;color:var(--acc);letter-spacing:-.02em}
+.stat span{display:block;font-size:.88em;color:var(--fg);margin-top:.35em;line-height:1.3}
+.stat em{display:block;font-style:normal;font-size:.78em;color:var(--mut);margin-top:.25em}
+.it{padding:.6em 0;border-top:1px solid var(--line)}
+.it h4{margin:0 0 .1em;font-size:1.08em;font-weight:800;color:var(--fg)}
+.it p{margin:0;color:var(--mut);font-size:.93em}
+.it.n{display:grid;grid-template-columns:2em 1fr;gap:.6em;align-items:start}
+.nb{width:1.7em;height:1.7em;border-radius:50%;background:var(--acc);color:#fff;font:800 .85em/1.7em inherit;text-align:center;display:block}
+.grid2{display:grid;grid-template-columns:1fr 1fr;gap:0 1em}
+.tbl{width:100%;border-collapse:collapse;font-size:.86em;margin:.6em 0}
+.tbl th{font:800 .78em/1.2 inherit;letter-spacing:.12em;text-transform:uppercase;color:var(--acc);text-align:left;padding:.4em .5em .4em 0;border-bottom:2px solid var(--line)}
+.tbl td{padding:.5em .5em .5em 0;border-bottom:1px solid var(--line);color:var(--fg);vertical-align:top}
+.tbl td:first-child{font-weight:700}
+.pill{display:inline-block;padding:.1em .7em;border-radius:999px;font:800 .85em inherit;white-space:nowrap;color:#fff}
+.pill.hi{background:#c0392b}.pill.md{background:#d98a12}.pill.lm{background:#8f9a2a}.pill.lo{background:#2e9a62}
+.foot{font-size:.8em;color:var(--mut);margin:.7em 0 0;font-style:italic}
+.flow{display:flex;flex-wrap:wrap;gap:.4em;align-items:center;margin:.8em 0}
+.chip2{background:#e9eff6;border-radius:999px;padding:.3em .8em;font:700 .84em inherit;color:#12203a}
+.chip2.new{background:var(--acc);color:#fff}
+.arr{color:#8a99b0}
+.rec{background:#fff3ec;border:1px solid #f4c4a4;border-radius:.8em;padding:.7em .9em;margin:.8em 0;font-size:.95em;color:#3a2a20}
+.rec b{display:block;font-size:.76em;letter-spacing:.14em;color:var(--acc);margin-bottom:.25em}
+.row{margin:.9em 0}
+.row .lab{display:flex;justify-content:space-between;font:800 .74em inherit;letter-spacing:.1em;color:var(--mut);text-transform:uppercase}
+.row .dl{color:var(--acc)}
+.trk{height:1.5em;border-radius:.5em;background:#e6ecf3;margin-top:.35em;overflow:hidden;position:relative}
+.trk i{display:block;height:100%;border-radius:.5em;width:0;transition:width 1.3s cubic-bezier(.2,.8,.2,1) .5s}
+.trk u{position:absolute;left:.7em;top:0;line-height:1.5em;font:800 .8em/1.9 inherit;text-decoration:none}
+.trk.a i{background:#b9c5d6}.trk.a u{color:#12203a}
+.trk.b i{background:linear-gradient(90deg,#e8590c,#ff9a63)}.trk.b u{color:#fff}
+#card.in .trk i{width:var(--w)}
+.ph,.dp{border:1px solid transparent;border-radius:.8em;transition:all .45s;opacity:.55}
+.ph{display:grid;grid-template-columns:2em 1fr;gap:.6em;padding:.5em .6em;margin:.1em 0}
+.ph h4{margin:0;font-size:1em;font-weight:800;color:var(--fg)}
+.ph h4 small{font:800 .75em inherit;color:var(--acc);margin-left:.6em}
+.ph p{margin:.1em 0 0;font-size:.85em;color:var(--mut)}
+.ph .gate{color:#1f8a58;font-weight:700}
+.ph.act,.dp.act{opacity:1;background:#fff3ec;border-color:#f0b48f}
+.dgrid{display:grid;grid-template-columns:1fr 1fr;gap:.55em;margin:.8em 0}
+.dp{padding:.6em .7em;background:var(--card)}
+.dp small{font:800 .68em inherit;letter-spacing:.12em;color:var(--acc);display:block;text-transform:uppercase}
+.dp b{display:block;font-size:.95em;color:var(--fg);margin:.2em 0}
+.dp p{margin:0;font-size:.82em;color:var(--mut);line-height:1.4}
+.cols h5{margin:.9em 0 .3em;font:800 .75em inherit;letter-spacing:.14em;color:var(--acc);text-transform:uppercase}
+.cols ul{margin:0;padding-left:1.2em;color:var(--fg);font-size:.95em}
+.cols li{margin:.15em 0}
+
+/* ===== controls (below the slide) ===== */
+#bar{position:fixed;z-index:7;left:50%;transform:translateX(-50%);bottom:calc(8px + env(safe-area-inset-bottom,0px));width:min(1100px,calc(100% - 20px));box-sizing:border-box;display:flex;align-items:center;gap:10px;padding:7px 10px;border-radius:16px;background:#16233d;border:1px solid rgba(255,255,255,.12);color:#e9eff8;transition:opacity .4s}
+body.fs #bar{opacity:0;pointer-events:none}
+body.fs.showbar #bar{opacity:1;pointer-events:auto}
+#bar button{height:36px;min-width:36px;border-radius:10px;border:1px solid rgba(255,255,255,.16);background:rgba(255,255,255,.07);color:#fff;font:700 15px system-ui,sans-serif;cursor:pointer;padding:0 11px;white-space:nowrap}
+#bar button:hover,#bar button.on{background:#e8590c;border-color:#e8590c}
+#seg{flex:1;display:flex;gap:4px;min-width:0}
+#seg i{flex:1;height:9px;border-radius:5px;background:rgba(255,255,255,.18);cursor:pointer;position:relative;overflow:hidden;transition:background .3s}
+#seg i:hover{background:rgba(255,255,255,.4)}
+#seg i.done{background:#e8590c}
+#seg i.cur{background:#ff9a63}
+#seg i.cur.run::after{content:"";position:absolute;inset:0;background:#fff;transform-origin:left;animation:fill var(--dur,20s) linear forwards;opacity:.6}
+@keyframes fill{from{transform:scaleX(0)}to{transform:scaleX(1)}}
+#cnt{font:700 13px system-ui,sans-serif;color:#c7d3e4;min-width:58px;text-align:center}
+
+#slide{left:0!important;top:0!important;width:100%!important;height:100%!important;box-shadow:none!important;background:#0b1220}
+#slide #mapbox,body.portrait #slide #mapbox,body.free #slide #mapbox{left:0;top:0;right:0;bottom:var(--fh);width:auto;height:auto;border-radius:0;box-shadow:none}
+#figcap{display:none}
+#bar{bottom:44px!important}
+#slide #panel,body.portrait #slide #panel{right:auto;bottom:auto;left:var(--pl,18px);top:var(--pt,18px);width:36em;height:var(--ph,30em);border-radius:1.1em;overflow:hidden;background:rgba(255,255,255,.9);-webkit-backdrop-filter:blur(14px);backdrop-filter:blur(14px);box-shadow:0 1em 3em rgba(0,0,0,.45);transition:left .95s cubic-bezier(.65,0,.25,1),top .95s cubic-bezier(.65,0,.25,1),height .95s cubic-bezier(.65,0,.25,1),background-color .8s}
+#slide #panel.cover{background:rgba(15,29,56,.88)}
+#slide #card{width:36em;height:100%;flex:none}
+
+:root{padding:0!important}
+#bar{bottom:calc(var(--u,1)*40px + 6px)!important}
+#slide #panel,body.portrait #slide #panel{width:var(--pwid,34em);z-index:8;background:rgba(255,255,255,.76);-webkit-backdrop-filter:blur(10px) saturate(1.2);backdrop-filter:blur(10px) saturate(1.2);box-shadow:0 .6em 2em rgba(0,0,0,.35)}
+#slide #panel.cover{background:rgba(15,29,56,.78)}
+#slide #card{width:100%}
+#ci{padding-bottom:.2em}
+</style></head><body>
+<div id="boot"><div class="sp"></div>Loading the Fakir washing floor…</div>
+<div id="mapbox"><div id="hint" class="chip">Sky-Rail PDS · receive &amp; delivery → dryers</div>
+<div id="zoom"><button id="pdsb" title="Show or hide the sky-rail system">PDS</button><button id="zin" title="Zoom in">+</button><button id="zout" title="Zoom out">−</button><button id="zfit" title="Fit whole floor">⌖</button></div>
+<div id="cap" class="chip"></div></div>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/controls/OrbitControls.js"></script>
+<script>
+const $=s=>document.querySelector(s),esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const FW=81.9,FD=49.0;
+const LAY=[["TA6","Team Ster Acid Wash-6 (New)","acid","acidN",34.2,11.2,1,0,1.98,10.26,1.98,10.26],["TA5","Team Ster Acid Wash-5 (New)","acid","acidN",36.9,11.2,1,0,1.53,10.26,1.53,10.26],["TA4","Team Ster Acid Wash-4 (New)","acid","acidN",39.5,11.2,1,0,2.43,10.26,2.43,10.26],["IA3","Industrial Acid Wash-3","acid","acidM",34.1,24.3,1,0,1.98,10.26,1.98,10.26],["IA2","Industrial Acid Wash-2","acid","acidM",36.8,24.3,1,0,1.53,10.26,1.53,10.26],["IA1","Industrial Acid Wash-1","acid","acidM",39.4,24.3,1,0,2.43,10.26,2.43,10.26],["DP1","Industrial Dip Dyeing-1","dip","dye",48.8,24.5,1,0,2.16,10.26,2.16,10.26],["DP2","Industrial Dip Dyeing-2","dip","dye",51.9,23.2,1,0,2.61,6.75,2.61,6.75],["ID3","Industrial Dyeing-3","washer","wash",32.9,34.4,0.3,3.1416,0,0,0.99,3.15],["OM7","Sample OMI-7","washer","wash",34.1,34.5,0.3,3.1416,0,0,0.99,3.06],["ID2","Industrial Dyeing-2","washer","wash",35.3,34.4,0.3,3.1416,0,0,0.99,3.06],["ID4","Industrial Dyeing-4","washer","wash",34.5,37.8,0.37,3.1416,0,0,3.15,0.99],["ID5","Industrial Dyeing-5","washer","dye",42.8,25.2,0.6,3.1416,0,0,1.98,3.15],["ID6","Industrial Dyeing-6","washer","dye",45.1,25.2,0.6,3.1416,0,0,1.98,3.15],["HY1","Hydro-1","hydro","hydro",55.4,23.7,0.93,3.1416,0,0,2.7,2.7],["HY2","Hydro-2","hydro","hydro",59.3,23.7,0.93,3.1416,0,0,2.7,2.7],["HY3","Hydro-3","hydro","hydro",63.3,23.7,0.93,3.1416,0,0,2.7,2.7],["MD3","Medium-3","washer","wash",37.2,34.0,0.6,3.1416,0,0,1.98,3.15],["MD2","Medium-2","washer","wash",39.4,34.0,0.6,3.1416,0,0,1.98,3.15],["MD1","Medium-1","washer","wash",41.7,34.0,0.6,3.1416,0,0,1.98,3.15],["BY2","Belly-2","washer3","wash",45.4,34.2,0.86,3.1416,0,0,3.78,3.15],["BY1","Belly-1","washer3","wash",50.2,34.1,0.86,3.1416,0,0,3.78,3.15],["TN2","Tonello-2","washer3","wash",54.9,34.1,0.86,3.1416,0,0,3.78,3.15],["TN1","Tonello-1","washer3","wash",59.6,34.1,0.86,3.1416,0,0,3.78,3.15],["BY3","Belly-3","washer3","wash",34.6,40.8,0.86,-1.5708,0,0,3.15,3.78],["BY4","Belly-4","washer3","wash",34.6,45.0,0.86,-1.5708,0,0,3.15,3.78],["BY5","Belly-5","washer3","wash",39.1,45.2,0.86,3.1416,0,0,3.78,3.15],["BY6","Belly-6","washer3","wash",43.4,45.1,0.86,3.1416,0,0,3.78,3.15],["TN3","Tonello-3","washer","wash",46.2,45.1,0.38,3.1416,0,0,1.26,3.15],["TW2","Team Star-2","washer3","wash",49.0,45.0,0.86,3.1416,0,0,3.78,3.15],["TW1","Team Star-1","washer3","wash",53.5,45.0,0.86,3.1416,0,0,3.78,3.15],["YD1","Yilmak Dyeing-1","washer3","spray",72.0,2.1,0.86,3.1416,0,0,3.78,3.15],["SP2","Spray-2","pp","spray",79.7,10.8,1.21,-1.5708,0,0,3.15,3.78],["SP1","Spray-1","pp","spray",79.7,15.3,1.21,-1.5708,0,0,3.15,3.78],["TD1","Team Ster Dryer-1","dryer3","dryU",28.8,20.9,0.63,3.1416,0,0,2.79,2.61],["TD2","Team Ster Dryer-2","dryer3","dryU",25.0,20.9,0.63,3.1416,0,0,2.79,2.61],["TD3","Team Ster Dryer-3","dryer3","dryU",21.0,20.9,0.63,3.1416,0,0,2.79,2.61],["TD4","Team Ster Dryer-4","dryer3","dryU",17.1,20.9,0.63,3.1416,0,0,2.79,2.61],["TD5","Team Ster Dryer-5","dryer3","dryU",13.4,20.9,0.63,3.1416,0,0,2.79,2.61],["TD6","Team Ster Dryer-6","dryer3","dryU",9.5,20.9,0.63,3.1416,0,0,2.79,2.61],["TX1","Tong Xin Dryer New-1","dryer","dryU",6.6,20.8,0.6,3.1416,0,0,1.53,2.34],["TX2","Tong Xin Dryer New-2","dryer","dryU",4.9,20.8,0.6,3.1416,0,0,1.53,2.34],["TX3","Tong Xin Dryer New-3","dryer","dryU",3.2,20.8,0.6,3.1416,0,0,1.53,2.34],["TX4","Tong Xin Dryer New-4","dryer","dryU",1.5,20.8,0.6,3.1416,0,0,1.53,2.34],["TX5","Tong Xin Dryer New-5","dryer","dryL",0.9,29.1,0.6,1.5708,0,0,2.34,1.53],["IN1","Industrial Dryer-1","dryer","dryL",0.6,30.9,0.35,1.5708,0,0,2.34,0.9],["IN2","Industrial Dryer-2","dryer","dryL",0.6,32.1,0.35,1.5708,0,0,2.34,0.9],["TX6","Tong Xin Dryer New-6","dryer","dryL",18.9,41.2,0.6,3.1416,0,0,1.53,2.34],["TX7","Tong Xin Dryer New-7","dryer","dryL",17.0,41.1,0.6,3.1416,0,0,1.53,2.34],["TX8","Tong Xin Dryer New-8","dryer","dryL",15.0,41.1,0.6,3.1416,0,0,1.53,2.34],["TX9","Tong Xin Dryer New-9","dryer","dryL",12.9,41.0,0.6,3.1416,0,0,1.53,2.34],["TX10","Tong Xin Dryer New-10","dryer","dryL",10.9,41.0,0.6,3.1416,0,0,1.53,2.34],["TO1","Tong Xin Dryer-1","dryer","dryL",8.9,40.9,0.6,3.1416,0,0,1.53,2.34],["TO2","Tong Xin Dryer-2","dryer","dryL",6.9,40.9,0.6,3.1416,0,0,1.53,2.34],["TO3","Tong Xin Dryer-3","dryer","dryL",4.8,40.9,0.6,3.1416,0,0,1.53,2.34],["IN3","Industrial Dryer-3","dryer","dryL",2.8,40.9,0.6,3.1416,0,0,1.53,2.34],["IN4","Industrial Dryer-4","dryer","dryL",0.8,40.8,0.6,3.1416,0,0,1.53,2.34],["YR1","Yilmak Dryer-1","dryer3","dryL",27.0,41.2,1.0,3.1416,0,0,4.41,2.61],["YR2","Yilmak Dryer-2","dryer3","dryL",22.5,41.2,1.0,3.1416,0,0,4.41,2.61]];
+const REGDEF={"acidN":["Acid Wash - Team Ster","#ff3b3b",32.0,4.9,41.9,17.5],"acidM":["Acid Wash - Industrial","#ff3b3b",31.9,18.0,41.8,30.6],"dye":["Dyeing Section","#38e1ff",40.6,18.2,54.4,30.8],"wash":["Washing Section","#38e1ff",31.2,31.2,62.7,48.1],"hydro":["Hydro Section","#4f8cff",52.8,21.1,65.8,26.2],"spray":["Yilmak Dyeing & Spray","#38e1ff",68.9,0,81.9,18.4],"dryU":["Dryer Section (Upper)","#ffb020",0,18.4,31.4,23.4],"dryL":["Dryer Section (Lower)","#ffb020",0,27.1,30.4,43.7],"recv":["Receive & Delivery Area","#b46bff",44.5,0.2,64.6,16.3],"final":["Ready to Deliver Final Goods","#35f0a0",65.2,7.9,71.0,16.2],"steam":["Steam Controlling Room","#2f6fd0",75.6,0.5,81.2,3.0],"qc":["Quality Checking Area","#35f0a0",75.6,3.8,81.2,8.5],"office":["Office Room","#c0392b",56.8,41.4,63.4,46.7],"dark":["Dark Room","#c0392b",67.5,34.8,70.4,41.5],"chem":["Chemical / Control","#e8d27a",70.7,21.8,79.4,48.8],"gen":["General / Floating","#6b7a8c",10.3,27.9,23.8,36.0]};
+const EXTRA={"exits":[[2.2,16.0],[66.3,47.7]],"green":[[3.1,25.8],[31.3,25.8],[31.3,38.6],[3.1,38.6]],"blue":[[32.1,32.2],[32.1,48.8]],"cor":[[[1.1,17.8],[81.4,17.8]],[[31.7,17.7],[31.7,45.1]],[[32.4,30.2],[66.4,30.2]],[[66.4,17.8],[66.4,48.2]]],"splitAt":0.381};
+const REG={};for(const k in REGDEF){const r=REGDEF[k];REG[k]=[r[0],r[1],r[2],r[3],r[4],r[5]]}
+const REGORDER=['acidN','acidM','dye','hydro','wash','spray','dryU','dryL','recv','final','qc','steam','office','dark','chem','gen'];
+const TYPE={washer:'Washing / dyeing machine',washer3:'Washing machine (3-drum)',dryer:'Dryer',dryer3:'Dryer (3-drum)',hydro:'Hydro extractor',acid:'Acid wash machine',dip:'Dip dyeing machine',pp:'Spray machine'};
+const CAP={"TA4":["Bangladesh",100,90,"pcs"],"TA5":["Bangladesh",100,90,"pcs"],"TA6":["Bangladesh",100,90,"pcs"],"IA1":["Taiwan",50,40,"pcs"],"IA2":["China",50,40,"pcs"],"IA3":["Taiwan",50,40,"pcs"],"DP1":["Taiwan",350,350,"pcs"],"DP2":["Taiwan",50,50,"pcs"],"HY1":["China",200,160,"kg"],"HY2":["China",150,120,"kg"],"HY3":["China",180,144,"kg"],"TN1":["Italy",200,160,"kg"],"TN2":["Italy",200,160,"kg"],"YD1":["Turkey",200,160,"kg"],"TW1":["Bangladesh",150,120,"kg"],"TW2":["Bangladesh",150,120,"kg"],"BY1":["China",50,40,"kg"],"BY2":["China",50,40,"kg"],"BY3":["China",50,40,"kg"],"BY4":["China",50,40,"kg"],"BY5":["China",50,40,"kg"],"BY6":["China",50,40,"kg"],"MD1":["China",20,16,"kg"],"MD2":["China",20,16,"kg"],"MD3":["China",20,16,"kg"],"TN3":["Italy",10,8,"kg"],"ID2":["China",2,1.6,"kg"],"ID3":["China",5,4,"kg"],"ID4":["China",3,2.4,"kg"],"ID5":["China",1,0.8,"kg"],"ID6":["China",1,0.8,"kg"],"OM7":["Italy",2,1.6,"kg"],"SP1":["Taiwan",2,2,"pcs"],"SP2":["Taiwan",2,2,"pcs"],"TD1":["Bangladesh",200,160,"kg"],"TD2":["Bangladesh",200,160,"kg"],"TD3":["Bangladesh",200,160,"kg"],"TD4":["Bangladesh",200,160,"kg"],"TD5":["Bangladesh",200,160,"kg"],"TD6":["Bangladesh",200,160,"kg"],"YR1":["Turkey",200,160,"kg"],"YR2":["Turkey",200,160,"kg"],"TO1":["China",50,40,"kg"],"TO2":["China",50,40,"kg"],"TO3":["China",50,40,"kg"],"IN1":["China",30,24,"kg"],"IN2":["China",30,24,"kg"],"IN3":["China",30,24,"kg"],"IN4":["China",30,24,"kg"],"TX1":["China",225,180,"kg"],"TX2":["China",225,180,"kg"],"TX3":["China",225,180,"kg"],"TX4":["China",225,180,"kg"],"TX5":["China",225,180,"kg"],"TX6":["China",225,180,"kg"],"TX7":["China",90,72,"kg"],"TX8":["China",90,72,"kg"],"TX9":["China",90,72,"kg"],"TX10":["China",90,72,"kg"]};
+const MAC=LAY.map(l=>{const r=CAP[l[0]]||[];return{id:l[0],name:l[1],type:l[2],region:l[3],x:l[4],z:l[5],s:l[6],rot:l[7],mw:l[8],ml:l[9],fw:l[10],fd:l[11],origin:r[0]||'',capacity:r[1]||0,load_cap:r[2]||0,unit:r[3]||'kg',status:'idle',style:null,lot:null,load_kg:0}});
+const MID=new Map(MAC.map(m=>[m.id,m]));
+function cy(a,b,h,c,x,y,z,rx=0,m=.4,seg=24){const o=new THREE.Mesh(new THREE.CylinderGeometry(a,b,h,seg),mat(c,m,.45));o.position.set(x,y,z);o.rotation.x=rx;o.castShadow=true;o.receiveShadow=true;return o}
+const bas=(w,h,d,c,x,y,z)=>{const o=new THREE.Mesh(new THREE.BoxGeometry(w,h,d),new THREE.MeshBasicMaterial({color:c}));o.position.set(x,y,z);return o};
+function pipe(a,b,r=.12,c=0xb9c2cc,m=.8,rg=.35,to){const A=new V(a[0],a[1],a[2]),B=new V(b[0],b[1],b[2]),d=B.clone().sub(A),L=d.length(),o=new THREE.Mesh(new THREE.CylinderGeometry(r,r,L,12),mat(c,m,rg));o.position.copy(A).add(B).multiplyScalar(.5);o.quaternion.setFromUnitVectors(new V(0,1,0),d.clone().normalize());o.castShadow=true;(to||sc).add(o);return o}
+const CHR=0xe3e8ec,STEEL=0xcdd4da;
+const ring=(R,t,x,y,z,c=CHR)=>{const o=new THREE.Mesh(new THREE.TorusGeometry(R,t,12,40),mat(c,1,.16,{envMapIntensity:1.2}));o.position.set(x,y,z);o.castShadow=true;return o};
+const annulus=(a,b,x,y,z,c)=>{const o=new THREE.Mesh(new THREE.RingGeometry(a,b,40),mat(c,.9,.22,{side:THREE.DoubleSide,envMapIntensity:1.1}));o.position.set(x,y,z);return o};
+const glass=(r,x,y,z,op=.3)=>{const o=new THREE.Mesh(new THREE.CircleGeometry(r,36),new THREE.MeshStandardMaterial({color:0xb4dcf0,metalness:.2,roughness:.04,transparent:true,opacity:op,side:THREE.DoubleSide,depthWrite:false,envMapIntensity:1.6}));o.position.set(x,y,z);return o};
+function drumInner(r,x,y,z,cols){const d=new THREE.Group();d.add(new THREE.Mesh(new THREE.CircleGeometry(r,36),mat(0x0d0f12,.6,.5)));
+ for(let i=0;i<4;i++){const b=bx(r*1.95,.06,.04,0x5e6a77,0,0,.02,.8,.3);b.rotation.z=i*Math.PI/4;d.add(b)}
+ for(let i=0;i<9;i++){const a=rnd()*6.28,q=rnd()*r*.66,s=new THREE.Mesh(new THREE.SphereGeometry(.16+rnd()*.13,10,8),mat(cols[i%cols.length],0,.95));s.position.set(Math.cos(a)*q,Math.sin(a)*q,.07+rnd()*.1);s.scale.z=.6;d.add(s)}
+ d.position.set(x,y,z);return d}
+const lamp=(x,y,z,rr=.14)=>{const o=new THREE.Mesh(new THREE.CylinderGeometry(rr,rr,.24,14),null);o.position.set(x,y,z);return o};
+function ctrlPanel(g,x,y,z,tilt,w=3){const p=new THREE.Group();p.position.set(x,y,z);p.rotation.x=tilt;p.add(bx(w,.5,.14,0x161a20,0,0,0,.4,.4));
+ const s=new THREE.Mesh(new THREE.PlaneGeometry(w*.34,.27),new THREE.MeshBasicMaterial({color:0x66bfff}));s.position.set(-w*.2,0,.075);p.add(s);
+ for(let i=0;i<4;i++)p.add(cy(.08,.08,.05,0xe3e8ec,w*.08+i*.27,.05,.08,Math.PI/2,.8,14));p.add(cy(.12,.12,.07,0xd23b2e,w*.4,0,.09,Math.PI/2,.3,16),bas(.06,.06,.02,0x34c76f,w*.08,-.14,.075));g.add(p)}
+function washerModel(g,m,o){const body=o.body||0x2563c9,top=o.top||0x1b3f85,R=o.R||.74;
+ g.add(bx(3.3,.28,2.7,0x2b3138,0,.14,0,.6,.5),bx(3.1,2.0,2.5,body,0,1.28,0,.6,.3),bx(3.16,.12,2.56,top,0,2.32,0,.6,.35),bx(3.16,.1,2.56,top,0,.32,0,.6,.35));
+ for(const s of[-1,1])g.add(bx(.05,1.5,2.0,top,s*1.57,1.28,0,.5,.4));
+ g.add(bx(2.1,.5,.05,top,0,.7,1.27,.5,.4),bx(1.3,.05,.06,0x0c0f13,0,.7,1.3));for(let i=-2;i<=2;i++)g.add(bx(.9,.03,.02,0x0c0f13,0,.6+i*.07+.07,1.3));
+ ctrlPanel(g,0,2.52,.72,-.45,3.0);
+ g.add(annulus(R,1.0,0,1.28,1.3,o.ring||0xdfe5ea));g.add(ring(R+.03,.08,0,1.28,1.34),glass(R,0,1.28,1.52,.28));
+ const dr=drumInner(R,0,1.28,1.27,o.cols||[0x2b4e92,0x3d68b5,0xcfd6e0,0x1b2d57,0x5b7fb8]);g.add(dr);m.drum=dr;
+ g.add(bx(.14,.6,.2,CHR,1.12,1.28,1.38,.9,.2),bx(.2,.2,.1,0x15181c,1.12,.7,1.3));
+ g.add(bx(1.5,.9,.7,0x23282f,0,.95,-1.6,.5,.5),bx(.9,.5,.1,0x6a7480,0,.95,-1.97,.6,.4));
+ pipe([-1.1,2.35,-.9],[-1.1,3.3,-.9],.09,0x2d7dd2,.4,.5,g);pipe([-1.1,3.3,-.9],[-.2,3.3,-.9],.09,0x2d7dd2,.4,.5,g);pipe([1.1,2.35,-.9],[1.1,3.1,-.9],.09,0xd23b2e,.4,.5,g);
+ pipe([1.3,.4,.6],[1.3,.4,1.9],.1,0x7d8791,.8,.4,g);pipe([1.3,.4,1.9],[1.3,.02,1.9],.1,0x7d8791,.8,.4,g);
+ if(o.stripe)g.add(bx(3.12,.14,2.52,o.stripe,0,2.1,0,.5,.4));
+ g.add(cy(.04,.04,.55,0x7d8791,1.35,2.6,-.6,0,.8,8));m.light=lamp(1.35,2.95,-.6)}
+function dryerModel(g,m,o){g.add(bx(2.55,.38,2.5,0x2f353c,0,.19,0,.6,.5),bx(2.4,2.15,2.3,STEEL,0,1.45,0,.85,.28),bx(2.46,.16,2.36,0xaab3bb,0,2.58,0,.85,.3),bx(2.42,.16,.04,0x2563c9,0,2.35,1.16,.5,.4));
+ for(const s of[-1,1]){g.add(bx(.04,1.7,1.9,0xaab3bb,s*1.2,1.45,0,.8,.35));for(let i=0;i<3;i++)g.add(bx(.05,.04,1.4,0x5d6670,s*1.22,1.0+i*.5,0,.6,.4))}
+ g.add(annulus(.58,.88,0,1.45,1.19,0xdfe5ea),ring(.6,.08,0,1.45,1.24),glass(.58,0,1.45,1.38,.26));
+ const dr=drumInner(.58,0,1.45,1.17,o.cols||[0x2b4e92,0xcfd6e0,0x3d68b5,0x7a8fa8]);g.add(dr);m.drum=dr;
+ g.add(bx(1.4,.34,.06,0x151a20,0,.62,1.18,.5,.4),bx(.7,.06,.08,0x9aa3ab,0,.45,1.2,.8,.3),bx(.1,.46,.1,CHR,.78,1.45,1.28,.9,.2));
+ g.add(bx(1.5,.34,.06,0x151a20,0,2.0,1.17,.4,.4));const s=new THREE.Mesh(new THREE.PlaneGeometry(.5,.2),new THREE.MeshBasicMaterial({color:0x66bfff}));s.position.set(-.45,2.0,1.205);g.add(s);for(let i=0;i<3;i++)g.add(cy(.06,.06,.04,CHR,.1+i*.25,2.0,1.2,Math.PI/2,.8,12));
+ g.add(cy(.34,.34,.55,0x8f98a1,0,3.0,-.7,0,.85),cy(.45,.34,.2,0x8f98a1,0,2.7,-.7,0,.85),cy(.38,.38,.12,0x6a7480,0,3.3,-.7,0,.8));m.exh=new V(0,3.4,-.7);
+ g.add(cy(.04,.04,.5,0x7d8791,1.0,2.9,.5,0,.8,8));m.light=lamp(1.0,3.25,.5)}
+function hydroModel(g,m){g.add(bx(2.9,.26,2.9,0x2a2f36,0,.13,0,.6,.5));for(const[a,b]of[[-1.05,-1.05],[1.05,-1.05],[-1.05,1.05],[1.05,1.05]])g.add(cy(.12,.12,.45,0x15181c,a,.4,b,0,.5,10));
+ g.add(cy(1.28,1.3,.7,0x2563c9,0,.72,0,0,.6),cy(1.2,1.2,1.3,STEEL,0,1.72,0,0,.9),cy(1.32,1.32,.14,0x9aa3ab,0,2.4,0,0,.9),ring(1.2,.06,0,2.42,0).rotateX(Math.PI/2));
+ const dome=new THREE.Mesh(new THREE.SphereGeometry(1.18,32,14,0,Math.PI*2,0,Math.PI/2),mat(0xb8c1c9,.9,.25,{envMapIntensity:1.1}));dome.scale.y=.4;dome.position.set(0,2.46,0);dome.castShadow=true;g.add(dome);
+ g.add(cy(.12,.12,.2,0x6a7480,0,2.95,0,0,.8),bx(.5,.4,.3,0x15181c,1.0,2.6,-.8,.5,.4),bx(.18,.18,1.6,CHR,.0,2.62,1.2,.9,.2));
+ const outer=new THREE.Group();outer.rotation.x=Math.PI/2;outer.position.set(0,3.08,0);const sp=new THREE.Group();outer.add(sp);sp.add(bx(.9,.07,.12,0xd23b2e,0,0,0,.4,.4),bx(.12,.07,.9,0xd23b2e,0,0,0,.4,.4));g.add(outer);m.spin=sp;
+ pipe([1.1,.7,0],[2.0,.7,0],.18,0x8f98a1,.85,.3,g);pipe([2.0,.7,0],[2.0,.1,0],.18,0x8f98a1,.85,.3,g);
+ g.add(cy(.06,.06,1.9,0x4a525b,1.5,1.0,1.3,0,.6,8),bx(.55,.45,.22,0x161a20,1.5,2.05,1.3,.4,.4));const sc2=new THREE.Mesh(new THREE.PlaneGeometry(.35,.2),new THREE.MeshBasicMaterial({color:0x66bfff}));sc2.position.set(1.5,2.07,1.42);g.add(sc2);
+ m.light=lamp(1.5,2.45,1.3)}
+function dipModel(g,m){g.add(bx(4.2,.2,3.2,0x2b3138,0,.1,0,.6,.5),bx(4,1.2,3,0x2563c9,0,.8,0,.6,.35),bx(4.1,.12,3.1,STEEL,0,1.42,0,.9,.25));
+ const liq=new THREE.Mesh(new THREE.PlaneGeometry(3.5,2.5),mat(0x2f6fb5,.2,.05,{transparent:true,opacity:.85,envMapIntensity:1.5}));liq.rotation.x=-Math.PI/2;liq.position.y=1.38;g.add(liq);
+ for(const s of[-1,1])g.add(bx(.18,3.2,.18,0x4a525b,s*1.9,1.8,-1.3,.6,.4));g.add(bx(4.0,.2,.2,0x4a525b,0,3.4,-1.3,.6,.4),bx(.5,.4,.4,0x2563c9,0,3.1,-1.3,.5,.4));
+ const cols=[0x2b4e92,0x9b7be8,0xe67e22,0x1abc9c];for(let i=0;i<4;i++){g.add(bx(.04,.9,.04,0x8f98a1,-1.2+i*.8,2.9,-1.3,.8,.3));g.add(bx(.6,.55,.12,cols[i],-1.2+i*.8,2.1,-1.3,0,.9))}
+ g.add(bx(1.2,.7,.4,0x161a20,1.6,1.9,1.5,.4,.4));m.light=lamp(-1.6,3.4,-1.3)}
+function ppModel(g,m){g.add(bx(2.6,.2,2.6,0x2b3138,0,.1,0,.6,.5),bx(2.4,2.6,2.4,0x2563c9,0,1.5,0,.6,.35),bx(1.7,1.5,.06,0x1b2733,0,1.5,1.2,.3,.3));
+ const gl=new THREE.Mesh(new THREE.PlaneGeometry(1.7,1.5),new THREE.MeshStandardMaterial({color:0xaed8ee,transparent:true,opacity:.22,roughness:.05,metalness:.3,depthWrite:false,envMapIntensity:1.5}));gl.position.set(0,1.5,1.25);g.add(gl);
+ g.add(cy(.28,.34,1.0,0xe9e0d0,0,1.2,0,0,0),(()=>{const s=new THREE.Mesh(new THREE.SphereGeometry(.22,10,8),mat(0xe9e0d0,0,.7));s.position.set(0,1.85,0);return s})(),cy(.04,.04,2.3,0x8f98a1,.7,1.5,-.2,0,.7,8),bx(.9,.06,.06,0x8f98a1,.35,2.4,-.2,.7,.4),cy(.06,.04,.3,0xe84393,0,2.4,-.2,0,.3,10),cy(.03,.03,1,0xe84393,0,2.0,-.2,0,.2,8));
+ g.add(bx(.7,.4,.25,0x161a20,.9,2.7,1.2,.4,.4),cy(.08,.08,1.2,0x7d8791,1.2,.6,-1.0,0,.8,8));m.light=lamp(0,2.95,0)}
+function trolley(parent,x,z,pile){const body=0x1f4fa8;parent.add(bx(1.5,.75,1.2,body,x,.78,z,.1,.55),bx(1.6,.1,1.3,0x2a62c9,x,1.18,z,.1,.55),bx(1.4,.1,1.1,0x333b44,x,.32,z,.5,.5));
+ for(const[a,b]of[[-.62,-.46],[.62,-.46],[-.62,.46],[.62,.46]]){const w=cy(.13,.13,.1,0x15181c,x+a,.16,z+b,0,0,12);w.rotation.z=Math.PI/2;parent.add(w)}
+ if(pile){const cols=[0x2b4e92,0x3d68b5,0xcfd6e0,0x1b2d57,0xb58a5a,0x8e3b3b];for(let i=0;i<5;i++){const s=new THREE.Mesh(new THREE.SphereGeometry(.34+rnd()*.14,10,8),mat(cols[(rnd()*6)|0],0,.95));s.position.set(x+(rnd()-.5)*.8,1.28+rnd()*.15,z+(rnd()-.5)*.6);s.scale.y=.7;s.castShadow=true;parent.add(s)}}}
+
+
+/* ============================================================
+   3D FLOOR (Three.js r128) - layout traced from the finalized floor diagram
+   world: x = west->east (0..FW), z = north->south (0..FD), 1 unit = 1 metre
+   ============================================================ */
+const STC={running:'#34c76f',idle:'#f2c230',maintenance:'#4a90e2',breakdown:'#ec5b4d'},SCOL={running:0x34c76f,idle:0xf2c230,maintenance:0x4a90e2,breakdown:0xec5b4d};
+const regCount=rid=>regionWorkers(rid).length;
+function V(x,y,z){return new THREE.Vector3(x,y,z)}
+let sc=null,cam=null,ctl=null,rd=null,cv3=null,GL=false,need=true,fly=null,figG=null,selRing=null,RC=null,cvW=1,cvH=1;
+const PICK=[],PADS=[],REGM=new Map(),OV={st:[],dyn:[]},FIGS=[];let FGEO=null;
+const _mc=new Map(),_gc=new Map();
+function mat(c,m=.3,r=.6,o){if(o)return new THREE.MeshStandardMaterial(Object.assign({color:c,metalness:m,roughness:r,envMapIntensity:.75},o));const k=c+'|'+m+'|'+r;let x=_mc.get(k);if(!x){x=new THREE.MeshStandardMaterial({color:c,metalness:m,roughness:r,envMapIntensity:.75});_mc.set(k,x)}return x}
+function boxG(w,h,d){const k=w+'|'+h+'|'+d;let g=_gc.get(k);if(!g){g=new THREE.BoxGeometry(w,h,d);_gc.set(k,g)}return g}
+function bx(w,h,d,c,x,y,z,m=.2,r=.7){const o=new THREE.Mesh(boxG(w,h,d),mat(c,m,r));o.position.set(x,y,z);o.castShadow=o.receiveShadow=true;return o}
+let _s=11;const rnd=()=>{_s=(_s*16807)%2147483647;return _s/2147483647};
+const BASEDIM={dryer:[2.55,2.5],dryer3:[4.4,2.6],washer:[3.3,2.7],washer3:[4.4,2.7],hydro:[2.9,2.9],pp:[2.6,2.6]};
+const isLong=m=>m.type=='acid'||m.type=='dip';
+const dim=m=>isLong(m)?[m.mw,m.ml]:BASEDIM[m.type];
+function washer3Model(g,m){const W=4.4;g.add(bx(W,.28,2.7,0x2b3138,0,.14,0,.6,.5),bx(W-.2,2.0,2.5,0x2563c9,0,1.28,0,.6,.3),bx(W-.1,.12,2.56,0x1b3f85,0,2.32,0,.6,.35),bx(W-.1,.1,2.56,0x1b3f85,0,.32,0,.6,.35));
+ for(let i=-1;i<=1;i++){const x=i*1.4;g.add(annulus(.5,.68,x,1.3,1.3,0xdfe5ea),ring(.52,.06,x,1.3,1.34),glass(.5,x,1.3,1.52,.28));g.add(drumInner(.5,x,1.3,1.27,[0x2b4e92,0x3d68b5,0xcfd6e0,0x1b2d57,0x5b7fb8]))}
+ ctrlPanel(g,0,2.52,.72,-.45,3.2);g.add(bx(1.6,.8,.6,0x23282f,0,.95,-1.55,.5,.5));
+ pipe([-1.4,2.35,-.9],[-1.4,3.2,-.9],.09,0x2d7dd2,.4,.5,g);pipe([1.4,2.35,-.9],[1.4,3.0,-.9],.09,0xd23b2e,.4,.5,g);m.light=lamp(1.9,2.6,-.6)}
+function dryer3Model(g,m){const W=4.4;g.add(bx(W,.38,2.5,0x2f353c,0,.19,0,.6,.5),bx(W-.15,2.15,2.3,STEEL,0,1.45,0,.85,.28),bx(W-.09,.16,2.36,0xaab3bb,0,2.58,0,.85,.3),bx(W-.1,.16,.04,0x2563c9,0,2.35,1.16,.5,.4));
+ for(let i=-1;i<=1;i++){const x=i*1.4;g.add(annulus(.5,.68,x,1.45,1.19,0xdfe5ea),ring(.52,.06,x,1.45,1.24),glass(.5,x,1.45,1.38,.26),drumInner(.5,x,1.45,1.17,[0x2b4e92,0xcfd6e0,0x3d68b5,0x7a8fa8]));g.add(cy(.3,.3,.5,0x8f98a1,x,3.0,-.7,0,.85),cy(.4,.3,.2,0x8f98a1,x,2.7,-.7,0,.85))}
+ g.add(bx(2.2,.34,.06,0x151a20,0,2.0,1.17,.4,.4));m.light=lamp(1.9,3.0,.5)}
+function acidModel(g,m){const W=Math.max(1.4,m.mw),L=m.ml,D=4.6,z0=-L/2,bw=W*.94,zf=z0+D,R=Math.min(.72,bw*.36);
+ g.add(bx(W,.16,L,0x3a424b,0,.08,0,.5,.6));for(let z=zf+.5;z<L/2-.2;z+=.7)g.add(bx(W-.2,.04,.12,0x6a737d,0,.18,z,.7,.4));
+ g.add(bx(bw,2.0,D,0x7d8a98,0,1.2,z0+D/2,.6,.35),bx(bw+.06,.12,D+.06,0x4f5a67,0,2.26,z0+D/2,.6,.35),bx(bw+.06,.34,D+.06,0xe67e22,0,.5,z0+D/2,.4,.5));
+ g.add(annulus(R,R*1.35,0,1.25,zf+.03,0xdfe5ea),ring(R+.03,.07,0,1.25,zf+.07),glass(R,0,1.25,zf+.25,.28),drumInner(R,0,1.25,zf+.0,[0x2b4e92,0xc9a98c,0x8d99a6,0x1b2d57]));
+ ctrlPanel(g,0,2.45,zf-.7,-.45,Math.min(2,bw));for(const s of[-1,1])g.add(cy(.05,.05,.4,0xe67e22,s*bw*.38,2.5,z0+.8,0,.5,8));
+ pipe([-bw*.3,2.3,z0+1],[-bw*.3,3.1,z0+1],.08,0x2d7dd2,.4,.5,g);pipe([bw*.3,2.3,z0+1],[bw*.3,3.0,z0+1],.08,0xd23b2e,.4,.5,g);
+ trolley(g,0,L/2-1.4,true);m.light=lamp(bw*.4,2.6,z0+1.8)}
+function dipModel2(g,m){const W=Math.max(1.4,m.mw),L=m.ml,z0=-L/2;
+ g.add(bx(W,.16,L,0x2b3138,0,.08,0,.6,.5),bx(W*.92,1.2,L*.86,0x2563c9,0,.8,-L*.03,.6,.35),bx(W*.96,.12,L*.88,STEEL,0,1.42,-L*.03,.9,.25));
+ const liq=new THREE.Mesh(new THREE.PlaneGeometry(W*.8,L*.78),mat(0x2f6fb5,.2,.05,{transparent:true,opacity:.85,envMapIntensity:1.5}));liq.rotation.x=-Math.PI/2;liq.position.set(0,1.5,-L*.03);g.add(liq);
+ const cols=[0x2b4e92,0x9b7be8,0xe67e22,0x1abc9c];for(let i=0;i<4;i++){const z=z0+1.2+i*(L*.18);g.add(bx(W*.9,.1,.1,0x4a525b,0,3.0,z,.6,.4));g.add(bx(.04,.8,.04,0x8f98a1,0,2.5,z,.8,.3));g.add(bx(W*.6,.5,.12,cols[i],0,2.1,z,0,.9))}
+ for(const s of[-1,1])g.add(bx(.14,3.0,.14,0x4a525b,s*W*.46,1.6,z0+.6,.6,.4),bx(.14,3.0,.14,0x4a525b,s*W*.46,1.6,L/2-1,.6,.4));
+ g.add(bx(W*.8,.9,.6,0x161a20,0,.6,L/2+.0,.4,.4));m.light=lamp(0,3.2,z0+.6)}
+function buildMachine(m){const g=new THREE.Group(),t=m.type;
+ if(t=='washer')washerModel(g,m,{});else if(t=='washer3')washer3Model(g,m);else if(t=='dryer')dryerModel(g,m,{});else if(t=='hydro')hydroModel(g,m);else if(t=='pp')ppModel(g,m);else if(t=='dryer3')dryer3Model(g,m);else if(t=='acid')acidModel(g,m);else dipModel2(g,m);
+ const d=dim(m),halo=new THREE.Mesh(new THREE.PlaneGeometry(d[0]+.8,d[1]+.8),new THREE.MeshBasicMaterial({color:SCOL[m.status]||SCOL.idle,transparent:true,opacity:.32,depthWrite:false}));halo.rotation.x=-Math.PI/2;halo.position.y=.04;g.add(halo);m.halo=halo;
+ const rr=Math.max(d[0],d[1])/2+.5,ring=new THREE.Mesh(new THREE.RingGeometry(rr,rr+.18,48),new THREE.MeshBasicMaterial({color:0x7fe9ff,transparent:true,opacity:.8,depthWrite:false,side:THREE.DoubleSide}));ring.rotation.x=-Math.PI/2;ring.position.y=.06;ring.userData.ph=Math.random();ring.userData.m=m;g.add(ring);ANIM.push(ring);
+ m.light.material=new THREE.MeshBasicMaterial({color:SCOL[m.status]||SCOL.idle});g.add(m.light);
+ g.scale.setScalar(m.s);g.position.set(m.x,0,m.z);g.rotation.y=m.rot;g.userData.m=m.id;sc.add(g);PICK.push(g);m.g=g}
+function frontOf(m){if(m.type=='acid')return{x:m.x,z:m.z-m.ml/2+D_ACID+1.4,lx:0,lz:1,dx:0,dz:-1};if(m.type=='dip')return{x:m.x,z:m.z+m.ml/2+1.4,lx:1,lz:0,dx:0,dz:-1};
+ const d=BASEDIM[m.type][1]*m.s/2+1.2,sn=Math.sin(m.rot),c=Math.cos(m.rot);return{x:m.x+sn*d,z:m.z+c*d,lx:c,lz:-sn,dx:-sn,dz:-c}}
+const D_ACID=4.6;
+
+/* ===== static environment ===== */
+function frame(x0,z0,x1,z1,col,t=.28,y=.05){const g=new THREE.Group(),M=new THREE.MeshBasicMaterial({color:col}),w=x1-x0,d=z1-z0;
+ for(const[a,b,c,e]of[[x0+w/2,z0,w,t],[x0+w/2,z1,w,t],[x0,z0+d/2,t,d],[x1,z0+d/2,t,d]]){const o=new THREE.Mesh(boxG(c,.06,e),M);o.position.set(a,y,b);g.add(o)}return g}
+function room(id,h,wallC,roofC){const r=REG[id],x0=r[2],z0=r[3],x1=r[4],z1=r[5],w=x1-x0,d=z1-z0,g=new THREE.Group(),t=.35;
+ g.add(bx(w,.06,d,0xf1f3f5,x0+w/2,.04,z0+d/2,0,.9));
+ for(const[a,b,c,e]of[[x0+w/2,z0,w,t],[x0+w/2,z1,w,t],[x0,z0+d/2,t,d],[x1,z0+d/2,t,d]])g.add(bx(c,h,e,wallC,a,h/2,b,.1,.6));
+ if(roofC)g.add(bx(w,.2,d,roofC,x0+w/2,h+.1,z0+d/2,.2,.5));return g}
+function corridor(a,b,dirs,sp){const dx=b[0]-a[0],dz=b[1]-a[1],L=Math.hypot(dx,dz),ang=Math.atan2(-dz,dx),g=new THREE.Group();
+ const s=new THREE.Mesh(new THREE.BoxGeometry(L,.05,1.25),new THREE.MeshStandardMaterial({color:0xd8b23a,roughness:.75}));s.position.set((a[0]+b[0])/2,.04,(a[1]+b[1])/2);s.rotation.y=ang;s.receiveShadow=true;g.add(s);
+ const n=Math.max(2,Math.floor(L/5));for(let i=0;i<n;i++){const u=(i+.5)/n;let sg=1;if(dirs=='split')sg=u<sp?-1:1;const c=new THREE.Mesh(new THREE.ConeGeometry(.32,.8,3),new THREE.MeshBasicMaterial({color:0x9b2c2c}));c.rotation.z=-Math.PI/2*sg;
+  const h=new THREE.Group();h.add(c);h.position.set(a[0]+dx*u,.12,a[1]+dz*u);h.rotation.y=ang;g.add(h)}return g}
+function buildRealismDetails(){
+ const stripe=new THREE.MeshBasicMaterial({color:0xf6c744,transparent:true,opacity:.72}),dark=new THREE.MeshStandardMaterial({color:0x202832,metalness:.7,roughness:.42}),light=new THREE.MeshStandardMaterial({color:0xf6fbff,emissive:0xb7dcff,emissiveIntensity:1.8,roughness:.2});
+ /* Structural grid and overhead service runs make the hall read as a real factory. */
+ for(const [x,z] of[[.8,18],[31.7,18],[66.4,18],[31.7,30.2],[66.4,30.2],[.8,44],[31.7,48],[66.4,48]]){
+  sc.add(cy(.22,.25,7.6,0x68727c,x,3.8,z,0,.72,16),cy(.42,.42,.08,0x303841,x,.06,z,0,.7,16))
+ }
+ pipe([1,6.9,12],[80.8,6.9,12],.16,0x758390,.8,.38);pipe([31.8,6.55,18],[31.8,6.55,48],.14,0xc8893d,.7,.42);pipe([66.5,6.55,18],[66.5,6.55,48],.14,0x2f7db7,.7,.42);
+ /* Wet-process drains: short dark grates along the washing and acid aisles. */
+ for(const z of[30.8,48.0])for(let x=34.5;x<64;x+=3.2){const g=bx(1.7,.025,.22,0x202832,x,.065,z,.65,.35);g.userData.detail='drain';sc.add(g)}
+ /* Safety hatch marks at aisle entries, kept separate from machine hit targets. */
+ for(const [x,z,w] of[[31.6,17.8,5.2],[66.1,17.8,4.5],[31.7,30.2,5.2],[66.4,30.2,4.5]]){for(let i=0;i<5;i++){const q=bx(.16,.018,1.05,0xf6c744,x-w/2+i*w/4,.075,z,.1,.45);q.rotation.y=.55;sc.add(q)}}
+ /* High-bay LED fixtures give the ceiling volume a believable industrial rhythm. */
+ for(const [x,z] of[[8,12],[24,12],[40,12],[56,12],[72,12],[8,27],[24,27],[40,27],[56,27],[72,27],[16,43],[32,43],[48,43],[64,43]]){
+  const g=new THREE.Group();g.add(bx(2.4,.10,.34,0xf4f8ff,x,7.8,z,.15,.22));g.add(bx(.08,1.2,.08,0x687789,x,8.35,z,.55,.4));sc.add(g)
+ }
+ /* Small yellow bollards protect the two main exits and the receiving corner. */
+ for(const [x,z] of[[1.7,16.0],[3.1,16.0],[65.8,47.1],[67.2,47.1]]){sc.add(cy(.12,.15,1.05,0xf0b429,x,.55,z,0,.55,12),cy(.22,.22,.06,0x202832,x,.05,z,0,.7,12))}
+}
+function buildStatic(){
+ const fl=new THREE.Mesh(new THREE.PlaneGeometry(FW+8,FD+8),new THREE.MeshStandardMaterial({color:0xc7cdd2,map:floorTex(),emissive:0x183746,emissiveIntensity:.16,roughness:.92,metalness:0,envMapIntensity:.25}));fl.rotation.x=-Math.PI/2;fl.position.set(FW/2,0,FD/2);fl.receiveShadow=true;sc.add(fl);
+ const pts=[];for(let x=0;x<=FW;x+=6){pts.push(x,.012,0,x,.012,FD)}for(let z=0;z<=FD;z+=6){pts.push(0,.012,z,FW,.012,z)}
+ const jg=new THREE.BufferGeometry();jg.setAttribute('position',new THREE.Float32BufferAttribute(pts,3));sc.add(new THREE.LineSegments(jg,new THREE.LineBasicMaterial({color:0x9fb0f4,transparent:true,opacity:.12})));
+ const T=.7,H=1.6,wc=0x33408f;for(const[a,b,c,d]of[[FW/2,-T/2,FW+T*2,T],[FW/2,FD+T/2,FW+T*2,T],[-T/2,FD/2,T,FD],[FW+T/2,FD/2,T,FD]])sc.add(bx(c,H,d,wc,a,H/2,b,.2,.7));
+ const gp=EXTRA.green;{const sh=new THREE.Shape();sh.moveTo(gp[0][0],-gp[0][1]);for(let i=1;i<gp.length;i++)sh.lineTo(gp[i][0],-gp[i][1]);const gm=new THREE.Mesh(new THREE.ShapeGeometry(sh),new THREE.MeshBasicMaterial({color:0x6aa84f,transparent:true,opacity:.55,side:THREE.DoubleSide,depthWrite:false}));gm.rotation.x=-Math.PI/2;gm.position.y=.03;sc.add(gm)}
+ 
+ 
+ 
+ /* regions */
+ for(const id of REGORDER){const r=REG[id],x0=r[2],z0=r[3],x1=r[4],z1=r[5],w=x1-x0,d=z1-z0,fixed=!!AREA_H[id];const col=new THREE.Color(r[1]);
+  const mt=new THREE.MeshBasicMaterial({color:col,transparent:true,opacity:fixed&&id!='chem'?.0:.1,depthWrite:false}),pad=new THREE.Mesh(new THREE.PlaneGeometry(w,d),mt);pad.rotation.x=-Math.PI/2;pad.position.set(x0+w/2,.02,z0+d/2);pad.userData={r:id,area:w*d};sc.add(pad);PADS.push(pad);
+  const fr=frame(x0,z0,x1,z1,col);fr.traverse(o=>{if(o.isMesh)o.userData={r:id,area:w*d}});sc.add(fr);REGM.set(id,{pad,mt,fr,base:fixed&&id!='chem'?0:.1,col:r[1]})}
+ /* fixed areas */
+ for(const id of['recv','final']){const r=REG[id],g=new THREE.Group();g.add(bx(r[4]-r[2],.12,r[5]-r[3],0xc5d0dc,(r[2]+r[4])/2,.07,(r[3]+r[5])/2,0,.9));sc.add(g)}
+ const rm=(id,h,wc,rc)=>{const g=room(id,h,wc,rc);g.traverse(o=>{if(o.isMesh)o.userData={r:id,area:1}});sc.add(g);PICK.push(g)};
+ rm('steam',2.8,0x2f6fd0,0x3b7fe0);rm('qc',2.6,0x2f6fd0,null);rm('office',2.8,0xc9d1d9,0xe6eaee);rm('dark',2.8,0xb3322b,null);
+ {const r=REG.chem,x0=r[2],z0=r[3],x1=r[4],z1=r[5];sc.add(bx(x1-x0,.1,z1-z0,0xf1e3a4,(x0+x1)/2,.06,(z0+z1)/2,0,.9));
+  for(let z=z0+1.6;z<z1-1;z+=2.4)for(let x=x0+1.5;x<x1-1;x+=2.2){const c=[0x2d7dd2,0xe67e22,0x2e8b57][((x*3+z)|0)%3],b=cy(.55,.55,1.3,c,x,.75,z,0,.2,14);sc.add(b)}}
+ /* machine name labels */
+ 
+ selRing=new THREE.Mesh(new THREE.RingGeometry(1,1.12,48),new THREE.MeshBasicMaterial({color:0x0b6bff,side:THREE.DoubleSide,depthTest:false,transparent:true}));selRing.rotation.x=-Math.PI/2;selRing.position.y=.12;selRing.renderOrder=4;selRing.visible=false;sc.add(selRing)}
+const AREA_H={recv:1,final:1,steam:1,qc:1,office:1,dark:1,chem:1};
+
+/* ===== overlays (HTML labels pinned to 3D points) ===== */
+function ovEl(cls,html,x,y,z,list){const e=document.createElement('div');e.className='ov '+cls;e.innerHTML=html;$('#ovl').appendChild(e);list.push({e,p:V(x,y,z)});return e}
+const _pv=()=>V(0,0,0);let _p=null;
+function updOv(){if(!GL)return;_p=_p||_pv();const near=cam.position.distanceTo(ctl.target)<50;$('#mapbox').classList.toggle('near',near);
+ for(const L of[OV.st,OV.dyn])for(const it of L){_p.copy(it.p).project(cam);const vis=_p.z<1&&_p.z>-1&&Math.abs(_p.x)<1.15&&Math.abs(_p.y)<1.15;if(!vis){it.e.style.visibility='hidden';continue}it.e.style.visibility='';it.e.style.transform='translate('+((_p.x*.5+.5)*cvW).toFixed(1)+'px,'+((-_p.y*.5+.5)*cvH).toFixed(1)+'px) translate(-50%,-100%)'}}
+
+
+function camFit(){const a=cam.aspect||1.6,th=Math.tan(cam.fov*Math.PI/360),rot=a<.85,cx=FW/2,cz=FD/2+1,half=(rot?FD:FW)/2+5,d=Math.max(55,half/(th*Math.min(a,1.8)*.95)),o=d*.55,h=d*.84;return{t:V(cx,0,cz),p:rot?V(cx-o,h,cz):V(cx,h,cz+o)}}
+function flyTo(t,p,ms){fly={t0:performance.now(),ms:ms||700,t1:t,p1:p,a:ctl.target.clone(),b:cam.position.clone()};need=true}
+function fitAll(){if(!GL)return;const f=camFit();flyTo(f.t,f.p,600)}
+function zoomBy(k){if(!GL)return;const d=cam.position.clone().sub(ctl.target).multiplyScalar(k);flyTo(ctl.target.clone(),ctl.target.clone().add(d),250)}
+function focusSel(s){if(!GL)return;let cx,cz,dist;if(s.k=='m'){const m=MID.get(s.id);cx=m.x;cz=m.z;dist=24}else{const r=REG[s.id];cx=(r[2]+r[4])/2;cz=(r[3]+r[5])/2;dist=Math.min(88,Math.max(26,Math.max(r[4]-r[2],r[5]-r[3])*1.25))}
+ const t=V(cx,0,cz),dir=cam.position.clone().sub(ctl.target).normalize();if(dir.y<.45){dir.y=.6;dir.normalize()}flyTo(t,t.clone().add(dir.multiplyScalar(dist)),700)}
+
+
+const ANIM=[];
+function floorTex(){const K=18,W=Math.round((FW+8)*K),H=Math.round((FD+8)*K),c=document.createElement('canvas');c.width=W;c.height=H;const x=c.getContext('2d');
+ x.fillStyle='#b3b8bd';x.fillRect(0,0,W,H);let sd=5;const r=()=>(sd=(sd*16807)%2147483647)/2147483647;
+ for(let i=0;i<9000;i++){x.fillStyle='rgba('+(r()<.5?'255,255,255':'70,75,80')+','+(.03+r()*.05)+')';x.fillRect(r()*W,r()*H,1+r()*3,1+r()*3)}
+ x.strokeStyle='#979da3';x.lineWidth=2;for(let u=0;u<=W;u+=K*6){x.beginPath();x.moveTo(u,0);x.lineTo(u,H);x.stroke()}for(let v=0;v<=H;v+=K*6){x.beginPath();x.moveTo(0,v);x.lineTo(W,v);x.stroke()}
+ const t=new THREE.CanvasTexture(c);t.anisotropy=8;return t}
+function skyTex(){const c=document.createElement('canvas');c.width=2;c.height=256;const x=c.getContext('2d'),g=x.createLinearGradient(0,0,0,256);g.addColorStop(0,'#9fabb6');g.addColorStop(1,'#d9dfe4');x.fillStyle=g;x.fillRect(0,0,2,256);return new THREE.CanvasTexture(c)}
+
+/* ===== SR-PDS: one closed sky-rail over the Receive & Delivery area and the Dryer area =====
+   Loading and unloading happen at the same low station (east end of Receive & Delivery).
+   The rail inclines from the station to 4.5 m, makes the whole rotation, then declines back to the same station. */
+const PD={H:4.5,LOW:1.6,speed:.9,on:true,g:null,lab:[],vent:[],cur:null,L:0,cnt:0,p:null,q:null};
+function pdsPts(){const H=PD.H,Lw=PD.LOW,P=(x,y,z)=>new THREE.Vector3(x,y,z);
+ return[P(61,Lw,14.4),P(55.1,3.05,14.4),P(49.2,H,14.4),P(44,H,14.4),P(38,H,14.4),P(33.2,H,14.4),
+  P(31.7,H,15.8),P(31.7,H,24),P(31.7,H,34),P(31.7,H,40.2),P(30.6,H,41.6),P(24,H,41.6),P(14,H,41.6),P(6,H,41.6),P(3,H,40.4),
+  P(3,H,32),P(3,H,24),P(3.9,H,21),P(10,H,21),P(20,H,21),P(28.2,H,21),P(29.5,H,19.5),P(29.5,H,15),P(30.6,H,12.4),
+  P(36,H,12.4),P(42,H,12.4),P(46,H,12.4),P(47,H,10.8),P(47,H,6),P(47.9,H,1.6),P(54,H,1.6),P(60,H,1.6),P(62,H,2.6),
+  P(62,3.05,8),P(62,Lw,13.4),P(61.6,Lw,14.3)]}
+function buildPDS(){const G=new THREE.Group();
+ const lab=(cls,t,x,y,z)=>{const e=ovEl('pds '+cls,t,x,y,z,OV.st);PD.lab.push(e)};
+ const rodG=new THREE.CylinderGeometry(1,1,1,6),rod=(x,y0,y1,z,r,c)=>{const m=new THREE.Mesh(rodG,mat(c,.5,.5));m.scale.set(r,y1-y0,r);m.position.set(x,(y0+y1)/2,z);return m};
+ const pts=pdsPts(),cur=new THREE.CatmullRomCurve3(pts,true,'centripetal');cur.arcLengthDivisions=3000;cur.updateArcLengths();PD.cur=cur;PD.L=cur.getLength();PD.p=new THREE.Vector3();PD.q=new THREE.Vector3();
+ const rail=new THREE.Mesh(new THREE.TubeGeometry(cur,1600,.06,8,true),mat(0xe8590c,.4,.4));rail.castShadow=true;G.add(rail);
+ const top=new THREE.CatmullRomCurve3(pts.map(p=>new THREE.Vector3(p.x,7.4,p.z)),true,'centripetal');G.add(new THREE.Mesh(new THREE.TubeGeometry(top,1600,.07,8,true),mat(0x5d6670,.6,.4)));
+ const P=new THREE.Vector3(),nr=Math.round(PD.L/4);for(let i=0;i<nr;i++){cur.getPointAt(i/nr,P);G.add(rod(P.x,P.y,7.4,P.z,.025,0x8a949e))}
+ /* roof cut-aways over the two covered areas, with turbo ventilators */
+ const slab=(x0,x1,z0,z1)=>{const m=new THREE.Mesh(new THREE.PlaneGeometry(x1-x0,z1-z0),new THREE.MeshBasicMaterial({color:0xdfe6ec,transparent:true,opacity:.16,side:THREE.DoubleSide,depthWrite:false}));m.rotation.x=-Math.PI/2;m.position.set((x0+x1)/2,9,(z0+z1)/2);G.add(m)};
+ slab(44.5,64.6,.2,16.3);slab(0,31.4,18.4,43.7);
+ for(const[x,z]of[[50,5],[58,5],[54,11],[8,24],[20,24],[8,35],[20,35]]){const v=new THREE.Group();v.position.set(x,9,z);v.add(cy(.32,.38,.9,0x9aa3ab,0,.45,0,0,.85,14));
+  const sp=new THREE.Group();sp.position.y=1.15;const dm=new THREE.Mesh(new THREE.SphereGeometry(.52,14,8),mat(0xcfd6dc,.8,.3));dm.scale.y=.85;sp.add(dm);
+  for(let i=0;i<12;i++){const fn=bx(.04,.7,.3,0xaeb8c2,0,0,0,.7,.35),a=i*Math.PI/6;fn.position.set(Math.cos(a)*.5,0,Math.sin(a)*.5);fn.rotation.y=-a+.5;sp.add(fn)}
+  v.add(sp);G.add(v);PD.vent.push(sp)}
+ /* loading / unloading station pad */
+ const pad=new THREE.Mesh(new THREE.PlaneGeometry(7.6,5.7),new THREE.MeshBasicMaterial({color:0x1f9d5c,transparent:true,opacity:.28,depthWrite:false}));pad.rotation.x=-Math.PI/2;pad.position.set(60.8,.09,13.35);G.add(pad);
+ /* trolley hangers with garments */
+ PD.cnt=Math.round(PD.L/1.8);const tot=PD.cnt;
+ const im=(g,m)=>{const o=new THREE.InstancedMesh(g,m,tot);o.frustumCulled=false;o.castShadow=true;G.add(o);return o};
+ PD.tro=im(new THREE.BoxGeometry(.2,.12,.2),mat(0x2a2f36,.6,.5));PD.rod=im(new THREE.CylinderGeometry(.018,.018,.34,6),mat(0x8a949e,.7,.4));
+ PD.bun=im(new THREE.BoxGeometry(.2,.6,.55),new THREE.MeshStandardMaterial({color:0xffffff,roughness:.9,metalness:0}));
+ const pal=[0x3b5b8c,0x6e8bb5,0xcfd6e0,0x1b2d57,0xb58a5a,0x8e3b3b,0x4f7f6a],cc=new THREE.Color();for(let i=0;i<tot;i++){cc.setHex(pal[i%pal.length]);PD.bun.setColorAt(i,cc)}PD.bun.instanceColor.needsUpdate=true;
+ PD.o3=new THREE.Object3D();
+ lab('g','Load / unload point',61,3.4,14.4);lab('','Incline',55.1,4.4,14.4);lab('','Decline',62,4.4,8);lab('','Sky-rail, 4.5 m',18,5.3,21);lab('w','Turbo ventilators',54,10.6,11);
+ sc.add(G);PD.g=G}
+function pdsTick(){if(!PD.on||!PD.tro)return;const o=PD.o3,L=PD.L,cnt=PD.cnt,sp=L/cnt,v=(PD.speed*performance.now()/1000)%L,P=PD.p,Q=PD.q;
+ for(let i=0;i<cnt;i++){const s=(i*sp+v)%L;PD.cur.getPointAt(s/L,P);PD.cur.getPointAt(((s+.3)%L)/L,Q);const ang=Math.atan2(Q.x-P.x,Q.z-P.z);
+  o.rotation.set(0,ang,0);o.scale.set(1,1,1);o.position.set(P.x,P.y-.06,P.z);o.updateMatrix();PD.tro.setMatrixAt(i,o.matrix);
+  o.position.y=P.y-.23;o.updateMatrix();PD.rod.setMatrixAt(i,o.matrix);
+  const u=s<L-3.5?1:.001;o.position.y=P.y-.7;o.scale.set(u,u,u);o.updateMatrix();PD.bun.setMatrixAt(i,o.matrix)}
+ PD.tro.instanceMatrix.needsUpdate=PD.rod.instanceMatrix.needsUpdate=PD.bun.instanceMatrix.needsUpdate=true;PD.vent.forEach(f=>f.rotation.y+=.1)}
+function setPDS(on){PD.on=on;if(PD.g)PD.g.visible=on;PD.lab.forEach(e=>e.style.display=on?'':'none');$('#pdsb').classList.toggle('off',!on);need=true}
+
+/* ===== a few workers (no names) ===== */
+function buildWorkers(){const FG={leg:new THREE.BoxGeometry(.2,.9,.22),torso:new THREE.BoxGeometry(.54,.8,.3),arm:new THREE.BoxGeometry(.14,.7,.16),head:new THREE.SphereGeometry(.27,16,12),hat:new THREE.SphereGeometry(.3,16,8,0,Math.PI*2,0,Math.PI/2)},UNI=[0x2c5aa8,0x2f8f7a,0x586070,0xb85c38];
+ const fig=i=>{const g=new THREE.Group(),mk=(geo,c,x,y,z)=>{const o=new THREE.Mesh(geo,mat(c,0,.85));o.position.set(x,y,z);o.castShadow=true;g.add(o)},u=UNI[i%4];
+  mk(FG.leg,0x2a2f3a,-.13,.45,0);mk(FG.leg,0x2a2f3a,.13,.45,0);mk(FG.torso,u,0,1.3,0);mk(FG.arm,u,-.36,1.25,0);mk(FG.arm,u,.36,1.25,0);mk(FG.head,0xe0ac86,0,1.9,0);mk(FG.hat,0xf2c230,0,2.0,0);return g};
+ [[59.5,15.9,0,-1],[57,15.9,0,-1],[63.4,11.6,-1,0],[63.4,13.2,-1,0],[52,7,0,1],[56,4,1,0],[12,18.9,0,1],[22,18.9,0,1],[8,38.4,0,1],[18,38.4,0,1]].forEach((w,i)=>{const g=fig(i);g.position.set(w[0],0,w[1]);g.rotation.y=Math.atan2(w[2],w[3]);sc.add(g)})}
+
+/* ===== selection (tap a machine or zone) ===== */
+function select(s){const cap=$('#cap');
+ if(s&&s.k=='m'){const m=MID.get(s.id),d=dim(m);selRing.visible=true;selRing.position.set(m.x,.12,m.z);selRing.scale.setScalar(isLong(m)?Math.max(3.2,m.mw*1.2+1.5):Math.max(d[0],d[1])*m.s*.62+.7);cap.textContent=m.name+' · '+(TYPE[m.type]||m.type)+(m.capacity?' · '+m.capacity+' '+m.unit:'');cap.style.display='block'}
+ else if(s){selRing.visible=false;cap.textContent=REG[s.id][0];cap.style.display='block'}
+ else{selRing.visible=false;cap.style.display='none'}
+ need=true;s?focusSel(s):fitAll()}
+function pickAt(cx,cy){const r=cv3.getBoundingClientRect();RC.setFromCamera({x:(cx-r.left)/r.width*2-1,y:-((cy-r.top)/r.height)*2+1},cam);
+ const hits=RC.intersectObjects([...PICK,...PADS],true);if(!hits.length)return select(null);
+ const info=h=>{let o=h.object,m=null,rg=null,a=1e9;while(o){const u=o.userData;if(u){if(u.m&&!m)m=typeof u.m=='object'?u.m.id:u.m;if(u.r&&!rg){rg=u.r;a=u.area||1e9}}o=o.parent}return{m,rg,a}};
+ const f=info(hits[0]);if(f.m&&MID.has(f.m))return select({k:'m',id:f.m});
+ let best=null;for(const h of hits){if(h.distance>hits[0].distance+.6)break;const i=info(h);if(i.m)break;if(i.rg&&(!best||i.a<best.a))best=i}
+ select(best?{k:'r',id:best.rg}:null)}
+
+function initMap(){const box=$('#mapbox');
+ if(!window.THREE||!THREE.OrbitControls){box.insertAdjacentHTML('afterbegin','<div class="nolib">The 3D map could not load. Check the internet connection and reload.</div>');return}
+ try{cv3=$('#cv3')||document.createElement('canvas');cv3.id='cv3';box.insertBefore(cv3,box.firstChild);const ov=document.createElement('div');ov.id='ovl';box.appendChild(ov);
+  rd=new THREE.WebGLRenderer({canvas:cv3,antialias:true,preserveDrawingBuffer:true});rd.setPixelRatio(Math.min(devicePixelRatio||1,2));rd.shadowMap.enabled=true;rd.shadowMap.type=THREE.PCFSoftShadowMap;
+  sc=new THREE.Scene();sc.background=skyTex();sc.fog=new THREE.Fog(0xcfd6dc,170,440);
+  cam=new THREE.PerspectiveCamera(45,1.6,.5,600);ctl=new THREE.OrbitControls(cam,cv3);ctl.enableDamping=true;ctl.dampingFactor=.12;ctl.maxPolarAngle=Math.PI/2-.04;ctl.minDistance=7;ctl.maxDistance=230;ctl.screenSpacePanning=false;ctl.addEventListener('change',()=>{need=true});
+  sc.add(new THREE.HemisphereLight(0xffffff,0x8d9298,.95));const dl=new THREE.DirectionalLight(0xfff6ea,1);dl.position.set(FW/2-20,80,FD/2+60);dl.target.position.set(FW/2,0,FD/2);dl.castShadow=true;dl.shadow.mapSize.set(2048,2048);Object.assign(dl.shadow.camera,{left:-60,right:60,top:44,bottom:-44,near:10,far:220});dl.shadow.camera.updateProjectionMatrix();dl.shadow.bias=-.0004;dl.shadow.normalBias=.04;sc.add(dl,dl.target);
+  try{const es=new THREE.Scene(),g=new THREE.SphereGeometry(60,32,16),pos=g.attributes.position,col=[];for(let i=0;i<pos.count;i++){const y=pos.getY(i)/60,t=(y+1)/2;col.push(.16+.5*t*t,.18+.52*t*t,.21+.58*t)}g.setAttribute('color',new THREE.Float32BufferAttribute(col,3));es.add(new THREE.Mesh(g,new THREE.MeshBasicMaterial({vertexColors:true,side:THREE.BackSide})));const pm=new THREE.PMREMGenerator(rd);sc.environment=pm.fromScene(es,.04).texture;pm.dispose()}catch(e){console.warn('env map skipped',e)}
+  RC=new THREE.Raycaster();buildStatic();MAC.forEach(buildMachine);
+  /* neutral look: no live status here, so machines carry a quiet halo */
+  MAC.forEach(m=>{m.halo.material.color.setHex(0x8fa3b8);m.halo.material.opacity=.14;m.light.material.color.setHex(0x9aa7b4)});ANIM.forEach(o=>o.visible=false);
+  sc.traverse(o=>{const m=o.material;if(!m||Array.isArray(m))return;
+   if(o.isMesh&&o.geometry.type==='PlaneGeometry'&&o.geometry.parameters&&Math.abs(o.geometry.parameters.width-(FW+8))<.01&&m.color){m.color.set(0xffffff);if(m.emissive)m.emissive.set(0x000000);m.emissiveIntensity=0;m.roughness=.9;m.needsUpdate=true}
+   if(o.isMesh&&m.color&&(m.color.getHex()===0x33408f||m.color.getHex()===0x2c2f3a)){m.color.set(0xbcc2c8);if(m.emissive)m.emissive.set(0x000000)}
+   if(o.isLineSegments&&m.color&&m.color.getHex()===0x9fb0f4)o.visible=false;
+   if(o.isMesh&&o.geometry.type==='RingGeometry'&&o.geometry.parameters.innerRadius>30)o.visible=false});
+  REGM.forEach(r=>{r.mt.opacity=Math.min(r.base,.05)});sc.traverse(o=>{if(o.isMesh&&o.material&&o.material.color&&o.material.color.getHex()===0x6aa84f)o.visible=false});
+  /* zone name labels */
+  for(const id of REGORDER){const r=REG[id],fx=!!AREA_H[id];ovEl('rc z',esc(r[0]),(r[2]+r[4])/2,fx?3.6:(id=='gen'?1.2:5.2),(r[3]+r[5])/2-(fx||id=='gen'?0:(r[5]-r[3])/2-1),OV.st)}
+  buildPDS();buildWorkers();
+  const rs=()=>{cvW=Math.max(1,box.clientWidth);cvH=Math.max(1,box.clientHeight);rd.setSize(cvW,cvH,false);cam.aspect=cvW/cvH;cam.fov=cam.aspect<1.3?58:45;if(window.__vo)cam.setViewOffset(cvW,cvH,window.__vo,0,cvW,cvH);else cam.clearViewOffset();cam.updateProjectionMatrix();need=true;updOv()};window.__rs=rs;
+  if(window.ResizeObserver)new ResizeObserver(rs).observe(box);addEventListener('resize',rs);
+  let dn=null;cv3.addEventListener('pointerdown',e=>{dn={x:e.clientX,y:e.clientY};fly=null});cv3.addEventListener('pointerup',e=>{if(!dn)return;const mv=Math.hypot(e.clientX-dn.x,e.clientY-dn.y);dn=null;if(mv>8)return;if(window.__free)pickAt(e.clientX,e.clientY)});
+  $('#zin').onclick=()=>zoomBy(.72);$('#zout').onclick=()=>zoomBy(1.4);$('#zfit').onclick=fitAll;$('#pdsb').onclick=()=>setPDS(!PD.on);
+  GL=true;rs();const f=camFit();ctl.target.copy(f.t);cam.position.copy(f.p);ctl.update();
+  let lastA=0;(function loop(){requestAnimationFrame(loop);let ch=false;const tn=performance.now();if(tn-lastA>33){lastA=tn;pdsTick();ch=PD.on}
+   if(window.__tourStep&&window.__tourStep(tn))ch=true;
+   if(fly){const k=Math.min(1,(tn-fly.t0)/fly.ms),e=k*k*(3-2*k);ctl.target.lerpVectors(fly.a,fly.t1,e);cam.position.lerpVectors(fly.b,fly.p1,e);if(k>=1)fly=null;ch=true}
+   if(ctl.update())ch=true;if(ch||need){need=false;rd.render(sc,cam);updOv()}})()
+ }catch(e){console.error(e);GL=false;box.insertAdjacentHTML('afterbegin','<div class="nolib">3D map failed to start: '+esc(e.message||e)+'</div>')}}
+window.addEventListener('load',initMap);
+
+</script>
+<script>
+(function(){
+'use strict';
+const B=document.body,D=document;
+let idx=-1,tour=null,FREE=false,auto=false,autoT=null,FXon=false,HZon=false,lastNow=0;
+const HZ={},pinEls={};
+let vapor=null,fxG=null,pilotG=null,dimG=null,_ride=null;
+
+/* ---------- helpers ---------- */
+const zf=()=>{const a=cam.aspect||1.6,k=a<1.3?1.327/a:1.775/a;return Math.min(1.9,Math.max(1,k))};
+function shot(t,d,az,el){d*=zf();const a=az*Math.PI/180,e=el*Math.PI/180;return{t:V(t[0],t[1],t[2]),p:V(t[0]+d*Math.cos(e)*Math.sin(a),Math.max(.9,t[1]+d*Math.sin(e)),t[2]+d*Math.cos(e)*Math.cos(a))}}
+const ease=k=>k<.5?4*k*k*k:1-Math.pow(-2*k+2,3)/2;
+function rideKfs(n){const c=PD.cur,k=[];for(let i=0;i<=n;i++){const u=(i/n)%1,P=c.getPointAt(u),T=c.getTangentAt(u).normalize(),A=c.getPointAt((u+.012)%1);
+ const p=P.clone().add(T.clone().multiplyScalar(-4)).add(V(0,1.6,0)),t=A.clone().add(T.clone().multiplyScalar(6));t.y=Math.max(1.2,P.y-2.2);k.push({p,t})}return k}
+const ride=()=>_ride||(_ride=rideKfs(56));
+const hl=(sel,n)=>[...D.querySelectorAll(sel)].forEach((e,i)=>e.classList.toggle('act',i===n));
+
+const rv=h=>`<div class="rv">${h}</div>`;
+const it=(t,d)=>`<div class="it rv"><h4>${t}</h4><p>${d}</p></div>`;
+const itn=(n,t,d)=>`<div class="it n rv"><span class="nb">${n}</span><div><h4>${t}</h4>${d?`<p>${d}</p>`:''}</div></div>`;
+function st(v,l,s){const m=String(v).match(/^([−~+<-]?)(\d[\d,]*(?:\.\d+)?)(.*)$/);let b;
+ if(m&&!/\d/.test(m[3])){const num=m[2].replace(/,/g,''),dec=(num.split('.')[1]||'').length;b=`<b data-n="${num}" data-pre="${m[1]}" data-suf="${m[3]}" data-d="${dec}" data-c="${m[2].includes(',')?1:0}">${v}</b>`}else b=`<b>${v}</b>`;
+ return `<div class="stat rv">${b}<span>${l}</span>${s?`<em>${s}</em>`:''}</div>`}
+const tbl=(h,rows)=>`<table class="tbl rv"><thead><tr>${h.map(x=>`<th>${x}</th>`).join('')}</tr></thead><tbody>${rows.map(r=>`<tr>${r.map(c=>`<td>${c}</td>`).join('')}</tr>`).join('')}</tbody></table>`;
+const foot=t=>`<p class="foot rv">${t}</p>`;
+const flow=a=>`<div class="flow rv">${a.map((x,i)=>(i?'<span class="arr">›</span>':'')+`<span class="chip2${x[1]?' new':''}">${x[0]}</span>`).join('')}</div>`;
+const rec=(h,t)=>`<div class="rec rv"><b>${h}</b>${t}</div>`;
+const bar=(lab,a,b,bw,dl)=>`<div class="row rv"><div class="lab"><span>${lab}</span><span class="dl">${dl}</span></div><div class="trk a" style="--w:100%"><i></i><u>Today ${a}</u></div><div class="trk b" style="--w:${bw}%;margin-top:4px"><i></i><u>SR-PDS ${b}</u></div></div>`;
+const presenter=()=>`<div class="presenter rv"><small>Presented by</small><b>Abdur Rauf</b><span>PGD – Garments Business</span><span>IBA – University of Dhaka</span></div>`;
+const pill=t=>`<span class="pill ${({High:'hi',Medium:'md','Low-medium':'lm',Low:'lo'})[t]}">${t}</span>`;
+
+/* ---------- pins ---------- */
+const PIN={
+ load:['1','Loading point (from extractor)',[61,3.7,14.4]],
+ hang:['2','Trolley hanger',[44,5.7,14.4]],
+ track:['3','Sky-rail track (overhead)',[36,5.7,12.4]],
+ warm:['4','Warm air zone',[54,7.6,6]],
+ vent:['5','Turbo ventilators',[50,10.8,5]],
+ unload:['6','Unloading point (to dryer)',[62,4.7,8]],
+ pwarm:['','Warm air layer · about 32–36 °C (to be measured)',[54,7.8,8]],
+ pv:['','Turbo ventilators remove humid air',[54,10.8,11]],
+ h45:['','Rail height 3.0–4.5 m · confirm on site',[49.2,2.4,14.4]],
+ spd:['','6–10 m/min · 2–3 h dwell',[44,5.8,14.4]],
+ phyd:['','Loading · hydro-extractor',[59.3,4.3,23.7]],
+ pdry:['','Unloading · steam tumble dryer',[21,4.5,20.9]],
+ pilot:['','Pilot: first ≈50 m of this rail',[40,6,14.4]],
+ m1:['','Moisture · QA sample weighing',[59.3,4.3,23.7]],
+ m2:['','Steam & gas sub-meter · dryer log',[21,4.5,20.9]],
+ m3:['','Data logger at rail height',[39,5.7,12.4]],
+ d1:['1','Production',[46,4.4,34]],
+ d2:['2','Utilities & boiler',[78.4,3.8,1.7]],
+ d3:['3','Maintenance',[18,4.4,21]],
+ d4:['4','Quality & QA',[78.4,3.6,6.1]],
+ d5:['5','HR & safety',[61,3.7,14.4]],
+ d6:['6','Finance & buyers',[60.1,3.8,44]],
+ s1:['','Loaders trained from current operators',[56,3.4,16.5]],
+ s2:['','Rail lowers at load points',[61,3.7,14.4]],
+ s3:['','Guards at drive points & curves',[62,4.7,8]],
+ b1:['','Metered steam per kg → Higg FEM · ZDHC',[78.4,3.8,1.7]],
+ b2:['','Final goods → H&M · ZARA · GAP · Primark',[68,3.4,12]],
+ r1:['','Roof structure · fire safety (Phase 0)',[40,8.4,12.4]],
+ r2:['','Humid-weather drying',[14,10.2,30]],
+ r3:['','Hanging labour',[61,3.7,14.4]]
+};
+
+/* ---------- slides ---------- */
+const LOC=['Plant overview','Plant overview','Dryer sections','Roof zone · receive & delivery','Receive & delivery area','Sky-rail ride-through','Elevation → plan view','Hydro-extractor → dryer','Pilot route · first 50 m','Dryer section','Roadmap tour','Pilot measurement points','Department tour','Loading station','Final goods · steam room','Roof · station · dryers','Plant overview'];
+const S=[
+{tip:'Cover',k:'Engineering concept  |  Rev A',title:'Sky-Rail Passive<br>Pre-Drying System <em>(SR-PDS)</em>',dur:18,
+ body:()=>`<p class="lead rv">Cutting steam demand in the Fakir Apparels washing plant</p><div class="stats s3">${st('−38%','steam')}${st('−35%','dryer cycle')}${st('2–3 h','passive drying')}</div>${presenter()}<p class="hintp rv">Press → or tap ›  to start the walk-through</p>`,
+ legs:()=>[{kfs:[shot([41,0,25],95,-32,30),shot([41,0,25],90,-8,34),shot([41,0,25],95,18,30)],ms:16000}]},
+{tip:'Summary',k:'01 / Summary',title:'Half the water out before the dryer',dur:22,zones:[],
+ body:()=>`<div class="stats">${st('27%','moisture entering the dryer','down from 55% after extraction')}${st('−38%','steam per kg of garment','1.00 kg to about 0.62 kg')}${st('−35%','dryer cycle time','40 min to about 26 min per batch')}${st('3,040','kg steam saved per day','about 912 t a year at full coverage')}</div>${rec('RECOMMENDATION','Approve a 50 m pilot on one extractor-to-dryer route, with a steam and gas sub-meter fitted first. Roll out only if metered results confirm the moisture, steam and quality targets.')}${foot('Projected values from the Green Idea Proposal; a metered pilot must confirm them.')}`,
+ legs:()=>[{kfs:[shot([41,0,24],85,22,42)],ms:4200}]},
+{tip:'Problem',k:'02 / Problem',title:'The dryer does all the work today',dur:22,zones:['dryU','dryL'],
+ body:()=>`${it('Steam-intensive drying','About 1.00 kg of steam per kg of garment, tied to gas price and supply.')}${it('Dryer queues at peak hours','Washed lots wait for a free dryer slot, which pushes lead time and overtime.')}${it('Unused rooftop heat','Heat from machines, pipes and sun collects under the roof and is wasted.')}${it('Buyer pressure on energy','H&amp;M, ZARA, GAP and Primark score energy intensity through ZDHC and Higg FEM.')}<div class="stats">${st('55-60%','moisture left after hydro-extraction')}${st('1.00 kg','steam for every kg of garment dried')}</div>`,
+ legs:()=>[{kfs:[shot([18,1.5,21],24,35,24)],ms:4200}]},
+{tip:'The idea',k:'03 / The idea',title:'Free pre-drying under the roof',dur:22,zones:['recv','dryU','dryL'],pins:['pwarm','pv'],fx:true,
+ body:()=>`${it('Warm air collects under the roof','The layer reaches about 32-36 °C, to be confirmed by measurement.')}${it('Garments dwell for 2-3 hours','Hung on a slow rail, they lose moisture by evaporation with no extra fuel.')}${it('Ventilators keep it drying','Turbo ventilators remove humid air so drier air keeps arriving.')}`,
+ legs:()=>[{kfs:[shot([54,8,9],20,-35,-8)],ms:4500}]},
+{tip:'Components',k:'04 / Components',title:'An overhead rail in the shed',dur:28,zones:['recv'],pins:['load','hang','track','warm','vent','unload'],
+ body:()=>`<p class="lead rv" style="font-size:14px">Workers load at one end; the rail loop runs under the roof trusses; garments come down at the dryer end.</p><div class="grid2">${itn(1,'Loading point (from extractor)')}${itn(2,'Trolley hanger')}${itn(3,'Sky-rail track (overhead)')}${itn(4,'Warm air zone')}${itn(5,'Turbo ventilators')}${itn(6,'Unloading point (to dryer)')}</div>${flow([['Hang'],['Load on rail'],['2-3 h in warm air'],['Unload'],['Shorter steam dryer cycle',1]])}`,
+ legs:()=>[{kfs:[shot([54,3.5,9],34,-28,30)],ms:4200}]},
+{tip:'Process',k:'05 / Process',title:'One new stage in the existing flow',dur:40,
+ body:()=>`${flow([['Hydro-extraction'],['Hang + 2-3 h on rail',1],['Unload'],['Steam dryer'],['Finishing and packing']])}${it('Unchanged','Wash recipes, hydro-extraction, the dryers, finishing and packing.')}${it('Added','Hanging, 2-3 hours on the rail, and unloading before the dryer.')}${it('Bypass','Urgent or delicate lots can go straight to the dryer.')}${foot('Riding the sky-rail through the whole loop…')}`,
+ legs:()=>[{kfs:()=>[ride()[0]],ms:3400},{kfs:()=>ride().slice(1),ms:36000,lin:true,nolift:true}]},
+{tip:'Geometry',k:'06 / Geometry',title:'Side elevation and plan view',dur:26,pins:['h45','spd'],dim:true,
+ body:()=>`<div class="stats">${st('3.0-4.5 m','rail height (confirm on site)')}${st('6-10 m/min','travel speed (indicative)')}${st('2-3 h','dwell time on the rail')}${st('~50 x 20 m','example loop and shed width')}</div>${foot('Camera: side elevation first, then plan view from above.')}`,
+ legs:()=>[{kfs:[shot([46,3.6,8],30,90,6)],ms:3600},{kfs:[shot([54,0,8],36,0,80)],ms:9000}]},
+{tip:'Schematic',k:'07 / Schematic',title:'Engineering concept schematic',dur:24,zones:['hydro','dryU'],pins:['phyd','pdry'],
+ body:()=>`${it('Section A-A','Loading at the hydro-extractor, unloading at the steam tumble dryer, air rising from the floor.')}${it('Plan B','Four parallel rails, each looped at both ends, between the loading and unloading ends.')}${it('Check on site','Rail height reads 4.0-4.5 m here and 3.0-4.0 m on the blueprint; confirm in the survey.')}`,
+ legs:()=>[{kfs:[shot([59,2,23.7],16,-30,16)],ms:3600},{kfs:[shot([24,2,21],18,30,16)],ms:7500}]},
+{tip:'Sizing',k:'08 / Sizing',title:'Sizing: the pilot is not the plant',dur:24,pins:['pilot'],pilot:true,
+ body:()=>`<div class="stats">${st('~1,200 m','rail path for full-plant coverage')}${st('<10%','of daily volume handled by a 50 m pilot')}</div>${tbl(['Sizing step','Result'],[['Daily volume (dry, assumed)','8,000 kg/day'],['Hours on the rail (assumed)','20 h/day'],['Hourly flow','400 kg/h'],['Garments on the rail at once','1,000 kg (2.5 h dwell)'],['Hangers needed','~4,000 (0.25 kg each)'],['Rail path length','~1,200 m (0.3 m pitch)']])}${foot('A 20 x 50 m shed holds about 25 parallel runs at 0.8 m spacing (about 1,250 m). Full coverage needs a multi-run layout; replace the assumptions with plant data. Green line = the 50 m pilot on the model loop.')}`,
+ legs:()=>[{kfs:[shot([41,0,24],72,0,72)],ms:4500}]},
+{tip:'Projected gains',k:'09 / Projected gains',title:'Projected energy and cycle gains',dur:24,zones:['dryU','dryL'],fx:true,
+ body:()=>`${bar('Moisture entering dryer (%)','55%','27%',49,'−51% less moisture')}${bar('Steam per kg garment (kg)','1.00','0.62',62,'−38% less steam')}${bar('Dryer cycle (min per batch)','40','26',65,'−35% shorter cycle')}${rec('AT FULL COVERAGE','About 3,040 kg of steam a day, roughly 912 t a year at 300 operating days.')}${foot('Projected, not measured. The blueprint shows ranges (25-30% moisture, 0.60-0.65 kg/kg, 25-28 min); the pilot must confirm them.')}`,
+ legs:()=>[{kfs:[shot([16,2,21],22,-30,16)],ms:3800},{kfs:[shot([16,2,21],22,30,16)],ms:14000}]},
+{tip:'Roadmap',k:'10 / Roadmap',title:'Five phases, about 24 weeks',dur:30,
+ body:()=>{const P=[['0','Survey and approval','Weeks 1-2','Measure roof temperature and humidity, check the roof structure, get EHS approval.','Gate: approval'],['1','Pilot build','Weeks 3-6','Install about 50 m of rail, trolleys and a steam and gas sub-meter.','Gate: safety check'],['2','Pilot run','Weeks 7-10','Run two production cycles and record moisture, steam, cycle time and quality.','Gate: data complete'],['3','Validation','Weeks 11-12','Compare results with the targets; tune dwell time and rail speed.','Gate: go / no-go'],['4','Rollout','Weeks 13-24','Extend the rail line by line; add turbo ventilators where needed.','Gate: each bay checked']];
+  return P.map(p=>`<div class="ph rv"><span class="nb">${p[0]}</span><div><h4>${p[1]}<small>${p[2]}</small></h4><p>${p[3]}</p><p class="gate">${p[4]}</p></div></div>`).join('')+foot('Survey, build and pilot run take about 10 weeks; validation and the go / no-go gate come at week 12. Rollout starts only after that gate.')},
+ legs:()=>[
+  {kfs:[shot([54,8,8],22,-30,-4)],ms:4200,on:()=>hl('.ph',0)},
+  {kfs:[shot([60,1.5,14],16,-40,22)],ms:4200,on:()=>hl('.ph',1)},
+  {kfs:[shot([42,4.5,14],18,25,12)],ms:4200,on:()=>hl('.ph',2)},
+  {kfs:[shot([24,2,21],18,30,18)],ms:4200,on:()=>hl('.ph',3)},
+  {kfs:[shot([41,0,24],85,22,42)],ms:4800,on:()=>hl('.ph',4)}]},
+{tip:'Pilot validation',k:'11 / Pilot validation',title:'How the pilot will prove it',dur:28,zones:['hydro','dryU'],pins:['m1','m3','m2'],pilot:true,
+ body:()=>`${tbl(['Measure','Today','Pilot target','Source'],[['Moisture at dryer inlet','55%','30% or less','QA sample weighing'],['Steam per kg garment','1.00 kg','0.70 kg or less','Dryer steam sub-meter'],['Dryer cycle time','40 min','30 min or less','Dryer log'],['Fabric quality','Approved','No new rejects','Shrinkage, GSM, shade, odour']])}${foot('A data logger at rail height records temperature and humidity through the whole pilot, including monsoon weeks.')}${it('Pilot route','A short run from extractor to dryer, clear roof space, regular single-jersey lots.')}${it('If a target is missed','Tune dwell time, rail speed and airflow before the go / no-go decision.')}`,
+ legs:()=>[{kfs:[shot([59,2,23.7],16,-30,16)],ms:3800},{kfs:[shot([38,4.5,14],20,20,20)],ms:5000},{kfs:[shot([22,2,21],18,28,18)],ms:5000}]},
+{tip:'Department impact',k:'12 / Department impact',title:'What improves in each department',dur:34,pins:['d1','d2','d3','d4','d5','d6'],
+ body:()=>{const C=[['Production','~50% more batches','Dryer cycle 40 to ~26 min; shorter queues and less overtime.'],['Utilities and boiler','3,040 kg less steam/day','Less gas, a flatter peak steam draw and spare boiler capacity.'],['Maintenance','Lower dryer wear','Fewer dryer running hours; add rail and ventilator inspections.'],['Quality and QA','Gentler finishing','Less over-drying; add moisture and dwell checks on every lot.'],['HR and safety','Steadier shifts','Cooler dryer area; new loader roles with training and guards.'],['Finance and buyers','Metered energy proof','Fuel saving plus steam-per-kg data for Higg FEM and ZDHC.']];
+  return `<div class="dgrid">${C.map(c=>`<div class="dp rv"><small>${c[0]}</small><b>${c[1]}</b><p>${c[2]}</p></div>`).join('')}</div>`},
+ legs:()=>[
+  {kfs:[shot([46,2,34],20,200,22)],ms:4200,on:()=>hl('.dp',0)},
+  {kfs:[shot([78.4,1.5,1.7],14,-50,24)],ms:4200,on:()=>hl('.dp',1)},
+  {kfs:[shot([18,2,21],20,200,20)],ms:4200,on:()=>hl('.dp',2)},
+  {kfs:[shot([78.4,1.2,6.1],13,-50,24)],ms:4200,on:()=>hl('.dp',3)},
+  {kfs:[shot([60,1.5,14.5],15,-40,20)],ms:4200,on:()=>hl('.dp',4)},
+  {kfs:[shot([60.1,1.5,44],20,200,22)],ms:4200,on:()=>hl('.dp',5)}]},
+{tip:'People and safety',k:'13 / People and safety',title:'Workers, safety and training',dur:24,pins:['s1','s2','s3'],
+ body:()=>`<div class="cols rv"><h5>Roles and ergonomics</h5><ul><li>Loaders trained from current operators</li><li>Rotate tasks every 1-2 hours</li><li>Rail lowers at load points</li></ul><h5>Safety</h5><ul><li>Permit to work for any roof access</li><li>Guards at drive points and curves</li><li>Fire clearance and sprinklers under the rail</li></ul><h5>Training</h5><ul><li>Loaders and operators before the pilot</li><li>Maintenance during installation</li><li>All floor staff before commissioning</li></ul></div>`,
+ legs:()=>[{kfs:[shot([59,1.4,15],14,-60,10)],ms:3800},{kfs:[shot([59,1.4,15],14,-20,14)],ms:12000}]},
+{tip:'Buyers and carbon',k:'14 / Buyers and carbon',title:'Buyer compliance and sustainability',dur:24,zones:['final','steam'],pins:['b1','b2'],
+ body:()=>`${tbl(['Framework','How SR-PDS helps'],[['Higg Index FEM','Lower energy use and emissions per kg in the facility\'s reported data'],['ZDHC','Supports energy and resource efficiency; adds no chemistry'],['Buyer scorecards (H&amp;M, ZARA, GAP, Primark)','A metered steam-per-kg cut is evidence for energy and decarbonisation targets']])}<div class="stats s3">${st('25-30%','lower dryer CO₂ per kg (projected)')}${st('~160 t','CO₂ a year at full coverage (approximate)')}${st('0','added water, chemicals or effluent')}</div>${foot('Report only metered before-and-after figures to buyers, not these projections.')}`,
+ legs:()=>[{kfs:[shot([72,1,8],34,-30,24)],ms:4500}]},
+{tip:'Risk register',k:'15 / Risk register',title:'Risks and how we manage them',dur:26,pins:['r1','r2','r3'],
+ body:()=>`${tbl(['Risk','Likelihood','Mitigation'],[['Moisture falls less than projected, especially in monsoon',pill('Medium'),'Test every season; extend dwell; add ventilation; accept a smaller real saving'],['Rail too small for plant volume',pill('High'),'Multi-run layout; prioritise lots that suit the rail'],['Hanging labour reduces the net saving',pill('Medium'),'Measure in the pilot; multi-garment hangers; job rotation'],['Quality issue: odour, marks or shade',pill('Low-medium'),'Dwell limits; first-lot approval; brief buyers early'],['Roof structure or fire safety',pill('Low'),'Structural check and EHS review in Phase 0']])}${foot('The two biggest unknowns, humid-weather drying and hanging labour, are measured in the pilot before any large spend.')}`,
+ legs:()=>[{kfs:[shot([45,8,9],24,-25,-8)],ms:4200},{kfs:[shot([60,1.5,14.5],15,-40,20)],ms:4200},{kfs:[shot([14,6,30],26,40,14)],ms:4800}]},
+{tip:'Next steps',k:'16 / Next steps',title:'Next steps',dur:24,
+ body:()=>`${itn(1,'Get Phase 0 approved by the Quality &amp; Sustainability Cell')}${itn(2,'Measure roof temperature and humidity; pick the pilot route')}${itn(3,'Get rail and sub-meter quotes and fix the budget')}${itn(4,'Complete the structural and EHS review')}${itn(5,'Brief key buyers\' technical teams on the pilot')}${itn(6,'Start the pilot build once steps 1 to 4 are done')}${rec('~10 WEEKS','to a metered answer on moisture, steam and quality (go / no-go at week 12), from a cheap, reversible pilot.')}<p class="thanks rv">Thank you · Questions?</p>${presenter()}`,
+ legs:()=>[{kfs:[shot([41,0,25],90,-20,32)],ms:3800},{kfs:[shot([41,0,25],90,25,30)],ms:20000}]}
+];
+/* make the plain-text titles for body lines that use & */
+S.forEach(s=>{s.title=s.title});
+
+/* ---------- camera tour ---------- */
+function nextLeg(){tour.i++;if(tour.i>=tour.legs.length){tour=null;return false}
+ const L=tour.legs[tour.i],kf=typeof L.kfs==='function'?L.kfs():L.kfs,s={t:ctl.target.clone(),p:cam.position.clone()};let pts=[s];
+ if(!L.nolift){const e=kf[0],dist=s.p.distanceTo(e.p),lift=Math.min(22,dist*.28);if(lift>3)pts.push({t:s.t.clone().lerp(e.t,.5),p:s.p.clone().lerp(e.p,.5).add(V(0,lift,0))})}
+ pts=pts.concat(kf);
+ L.cp=new THREE.CatmullRomCurve3(pts.map(a=>a.p),false,'centripetal');L.ct=new THREE.CatmullRomCurve3(pts.map(a=>a.t),false,'centripetal');
+ L.t0=performance.now();if(L.on)L.on();return true}
+function startTour(legs){tour={legs,i:-1};ctl.enabled=false;if(!nextLeg())tour=null;need=true}
+window.__tourStep=function(now){let ch=false;const dt=Math.min(.1,(now-lastNow)/1000||0);lastNow=now;
+ if(tour){const L=tour.legs[tour.i],k=Math.min(1,(now-L.t0)/L.ms),e=L.lin?k:ease(k);L.cp.getPoint(e,cam.position);L.ct.getPoint(e,ctl.target);if(k>=1&&!nextLeg())ctl.enabled=FREE;ch=true}
+ if(FXon&&vapor){const p=vapor.geometry.attributes.position,a=p.array,sp=vapor.userData.sp;for(let i=0;i<sp.length;i++){a[i*3+1]+=dt*sp[i];a[i*3]+=Math.sin(now/1500+i)*dt*.12;if(a[i*3+1]>9){a[i*3+1]=2.4+Math.random()*1.5}}p.needsUpdate=true;ch=true}
+ if(HZon){const o=.2+.1*Math.sin(now/350);for(const id in HZ)if(HZ[id].visible)HZ[id].material.opacity=o;ch=true}
+ return ch};
+
+/* ---------- scene extras ---------- */
+function circleTex(){const c=D.createElement('canvas');c.width=c.height=32;const x=c.getContext('2d'),g=x.createRadialGradient(16,16,0,16,16,16);g.addColorStop(0,'rgba(255,255,255,1)');g.addColorStop(1,'rgba(255,255,255,0)');x.fillStyle=g;x.fillRect(0,0,32,32);return new THREE.CanvasTexture(c)}
+function buildExtras(){
+ /* walkways + exits (floor corrections) */
+ for(const c of EXTRA.cor){const a=c[0],b=c[1],dx=b[0]-a[0],dz=b[1]-a[1],L=Math.hypot(dx,dz),g=new THREE.Group();g.position.set((a[0]+b[0])/2,.05,(a[1]+b[1])/2);g.rotation.y=Math.atan2(-dz,dx);
+  g.add(new THREE.Mesh(new THREE.BoxGeometry(L,.02,1.5),new THREE.MeshBasicMaterial({color:0xe9d58c,transparent:true,opacity:.5,depthWrite:false})));
+  for(const o of[-.72,.72]){const e=new THREE.Mesh(new THREE.BoxGeometry(L,.02,.08),new THREE.MeshBasicMaterial({color:0xf0b429}));e.position.set(0,.012,o);g.add(e)}sc.add(g)}
+ for(const e of EXTRA.exits){const m=new THREE.Mesh(new THREE.PlaneGeometry(3,1.4),new THREE.MeshBasicMaterial({color:0x1f9d5c,transparent:true,opacity:.85}));m.rotation.x=-Math.PI/2;m.position.set(e[0],.07,e[1]);sc.add(m);ovEl('ex','EXIT',e[0],2.6,e[1],OV.st)}
+ /* highlight planes */
+ for(const id of REGORDER){const r=REG[id],w=r[4]-r[2],d=r[5]-r[3],m=new THREE.Mesh(new THREE.PlaneGeometry(w,d),new THREE.MeshBasicMaterial({color:r[1],transparent:true,opacity:.22,depthWrite:false}));m.rotation.x=-Math.PI/2;m.position.set(r[2]+w/2,.16,r[3]+d/2);m.visible=false;sc.add(m);HZ[id]=m}
+ /* warm layer + vapour */
+ fxG=new THREE.Group();fxG.visible=false;const areas=[[44.5,64.6,.2,16.3],[0,31.4,18.4,43.7]];
+ for(const[x0,x1,z0,z1]of areas){const m=new THREE.Mesh(new THREE.BoxGeometry(x1-x0,2.6,z1-z0),new THREE.MeshBasicMaterial({color:0xff8a3d,transparent:true,opacity:.13,depthWrite:false}));m.position.set((x0+x1)/2,7.7,(z0+z1)/2);fxG.add(m)}
+ const N=520,pos=new Float32Array(N*3),sp=new Float32Array(N);
+ for(let i=0;i<N;i++){const a=areas[Math.random()<.3?0:1];pos[i*3]=a[0]+Math.random()*(a[1]-a[0]);pos[i*3+1]=2.4+Math.random()*6.6;pos[i*3+2]=a[2]+Math.random()*(a[3]-a[2]);sp[i]=.5+Math.random()*.9}
+ const vg=new THREE.BufferGeometry();vg.setAttribute('position',new THREE.BufferAttribute(pos,3));
+ vapor=new THREE.Points(vg,new THREE.PointsMaterial({color:0xffffff,size:.55,map:circleTex(),transparent:true,opacity:.6,depthWrite:false}));vapor.userData.sp=sp;vapor.frustumCulled=false;fxG.add(vapor);sc.add(fxG);
+ /* pilot segment (first 50 m of the rail) */
+ const pts=[];for(let s=0;s<=50;s+=1)pts.push(PD.cur.getPointAt(Math.min(1,s/PD.L)));
+ pilotG=new THREE.Mesh(new THREE.TubeGeometry(new THREE.CatmullRomCurve3(pts),120,.14,8,false),new THREE.MeshBasicMaterial({color:0x19d38a}));pilotG.visible=false;sc.add(pilotG);
+ const pp=PD.cur.getPointAt(25/PD.L);PIN.pilot[2]=[pp.x,pp.y+1.3,pp.z];
+ /* rail-height dimension line */
+ dimG=new THREE.Group();dimG.visible=false;const dm=new THREE.MeshBasicMaterial({color:0x19d38a}),cyl=new THREE.Mesh(new THREE.CylinderGeometry(.06,.06,PD.H,8),dm);cyl.position.set(49.2,PD.H/2,14.4);dimG.add(cyl);
+ for(const y of[.02,PD.H]){const c=new THREE.Mesh(new THREE.BoxGeometry(1,.05,.05),dm);c.position.set(49.2,y,14.4);dimG.add(c)}sc.add(dimG);
+ /* pins */
+ for(const id in PIN){const p=PIN[id],e=ovEl('pin',(p[0]?`<span class="n">${p[0]}</span>`:'')+p[1],p[2][0],p[2][1],p[2][2],OV.dyn);e.style.display='none';pinEls[id]=e}
+}
+function showPins(list){for(const id in pinEls){const e=pinEls[id],on=list.includes(id);
+ if(on){if(e.style.display==='none'){e.style.display='';e.classList.remove('on');requestAnimationFrame(()=>requestAnimationFrame(()=>{e.classList.add('on');need=true}))}}
+ else{e.classList.remove('on');e.style.display='none'}}need=true}
+function setZones(ids){HZon=ids.length>0;for(const id in HZ){HZ[id].visible=ids.includes(id);HZ[id].material.opacity=.22}need=true}
+
+/* ---------- rendering the slide ---------- */
+function count(el){const n=+el.dataset.n,pre=el.dataset.pre,suf=el.dataset.suf,dec=+el.dataset.d||0,comma=el.dataset.c==='1',t0=performance.now(),dur=1300;
+ (function f(now){const k=Math.min(1,(now-t0)/dur),v=n*(1-Math.pow(1-k,3));el.textContent=pre+(comma?Math.round(v).toLocaleString('en-US'):v.toFixed(dec))+suf;if(k<1)requestAnimationFrame(f)})(t0)}
+function render(i){const s=S[i],card=$('#card');card.classList.remove('in');card.scrollTop=0;
+ const cover=(i===0||i===S.length-1);$('#panel').classList.toggle('cover',cover);
+ const sl=$('#slide'),SW=sl.clientWidth;if(!B.classList.contains('portrait'))sl.style.setProperty('--pw',Math.round(SW*(cover?.46:.4))+'px');
+ card.innerHTML=`<div id="ci"><div class="k rv">${s.k}</div><h1 class="t rv">${s.title}</h1><div class="rule rv"></div>${s.body()}</div>`;
+ $('#pgn').textContent=i+1;$('#figcap').innerHTML='<b>FIG. '+(i+1)+'</b>3D view · '+LOC[i];
+ card.querySelectorAll('.rv').forEach((e,j)=>e.style.setProperty('--i',j));
+ void card.offsetWidth;card.classList.add('in');
+ card.querySelectorAll('b[data-n]').forEach(e=>{e.textContent=e.dataset.pre+'0'+e.dataset.suf;setTimeout(()=>count(e),450)});
+ $('#cnt').textContent=String(i+1).padStart(2,'0')+' / '+S.length;
+ [...$('#seg').children].forEach((e,j)=>{e.className=j<i?'done':j===i?'cur':'';if(j===i&&auto){e.classList.add('run');e.style.setProperty('--dur',(s.dur||20)+'s')}})}
+
+const FS=()=>!!(D.fullscreenElement||D.webkitFullscreenElement);
+let busy=false;
+function refit(){busy=true;try{dispatchEvent(new Event('resize'))}finally{busy=false}}
+function place(){if(idx<0)return;const sl=$('#slide'),p=$('#panel'),c=$('#card'),ci=$('#ci');if(!sl||!p||!c||!ci)return;
+ const W=sl.clientWidth,H=sl.clientHeight,em=parseFloat(getComputedStyle(sl).fontSize),g=1.1*em,fh=2.7*em,pw=Math.min(34*em,W*.44),L=idx%2===0,cs=getComputedStyle(c);
+ const nh=ci.offsetHeight+parseFloat(cs.paddingTop)+parseFloat(cs.paddingBottom),room=H-fh-2*g,h=Math.min(room,nh+4);
+ p.style.setProperty('--pwid',pw+'px');p.style.setProperty('--pl',(L?g:W-g-pw)+'px');p.style.setProperty('--pt',(g+(room-h)/2)+'px');p.style.setProperty('--ph',h+'px');
+ const tgt=FREE?0:(L?-1:1)*(pw+g)/2,from=window.__vo||0,t0=performance.now();cancelAnimationFrame(window.__voA);
+ (function f(n){const k=Math.min(1,(n-t0)/900),e=k<.5?4*k*k*k:1-Math.pow(-2*k+2,3)/2;window.__vo=from+(tgt-from)*e;window.__rs&&window.__rs();if(k<1)window.__voA=requestAnimationFrame(f)})(t0)}
+function layout(){const slide=$('#slide'),fs=FS(),aw=innerWidth,ah=innerHeight;B.classList.remove('portrait');B.classList.toggle('fs',fs);
+ {const u=Math.max(.42,Math.min(aw/1280,ah/720)).toFixed(3);slide.style.setProperty('--u',u);document.documentElement.style.setProperty('--u',u)}place();refit()}
+function go(i){i=Math.max(0,Math.min(S.length-1,i));if(FREE)exitFree();
+ const first=idx<0;idx=i;const s=S[i];render(i);place();
+ if(GL){setZones(s.zones||[]);showPins(s.pins||[]);FXon=!!s.fx;fxG.visible=FXon;pilotG.visible=!!s.pilot;dimG.visible=!!s.dim;
+  const legs=s.legs();
+  if(first){const k=legs[0].kfs.shift();ctl.target.copy(k.t);cam.position.copy(k.p);ctl.update()}
+  startTour(legs)}
+ sched()}
+function sched(){clearTimeout(autoT);if(!auto||FREE)return;autoT=setTimeout(()=>{if(idx<S.length-1)go(idx+1);else setAuto(false)},(S[idx].dur||20)*1000)}
+function setAuto(on){auto=on;$('#bAuto').innerHTML=on?'❚❚':'▶';$('#bAuto').classList.toggle('on',on);if(!on){clearTimeout(autoT);[...$('#seg').children].forEach(e=>e.classList.remove('run'))}else{const c=$('#seg').children[idx];if(c){c.classList.add('run');c.style.setProperty('--dur',(S[idx].dur||20)+'s')}sched()}}
+
+function enterFree(){FREE=true;cancelAnimationFrame(window.__voA);window.__vo=0;window.__rs&&window.__rs();window.__free=true;tour=null;clearTimeout(autoT);B.classList.add('free');ctl.enabled=true;ctl.minDistance=7;ctl.maxPolarAngle=Math.PI/2-.04;setZones([]);showPins([]);refit();
+ $('#hint').textContent='Free look · drag to orbit · scroll to zoom · tap a machine · Esc to return';$('#bFree').classList.add('on');fitAll();need=true}
+function exitFree(){FREE=false;window.__free=false;B.classList.remove('free');refit();ctl.enabled=false;ctl.minDistance=1;ctl.maxPolarAngle=Math.PI;fly=null;selRing.visible=false;$('#cap').style.display='none';$('#bFree').classList.remove('on')}
+function toggleFree(){if(!GL)return;if(FREE){exitFree();go(idx)}else enterFree()}
+function fs(){const d=D,e=d.documentElement;if(!d.fullscreenElement&&!d.webkitFullscreenElement)(e.requestFullscreen||e.webkitRequestFullscreen||function(){}).call(e);else(d.exitFullscreen||d.webkitExitFullscreen||function(){}).call(d)}
+
+/* ---------- boot ---------- */
+function initDeck(){const boot=$('#boot');
+ if(GL){ctl.minDistance=1;ctl.maxPolarAngle=Math.PI;ctl.enabled=false;PD.lab.forEach(e=>e.style.display='')}
+ const box=$('#mapbox'),slide=D.createElement('div');slide.id='slide';B.appendChild(slide);slide.appendChild(box);
+ slide.insertAdjacentHTML('beforeend',`<aside id="panel"><div id="card"></div></aside><div id="sfoot"><span class="who2"><b>Abdur Rauf</b><i>|</i>PGD – Garments Business<i>|</i>IBA – University of Dhaka</span><span class="pg">SR-PDS · <b id="pgn">1</b> / ${S.length}</span></div>`);
+ box.insertAdjacentHTML('beforeend','<div id="figcap"></div>');
+ B.insertAdjacentHTML('beforeend',`<div id="bar"><button id="bPrev" title="Previous (←)" aria-label="Previous slide">‹</button><div id="seg"></div><button id="bNext" title="Next (→)" aria-label="Next slide">›</button><span id="cnt"></span><button id="bAuto" title="Autoplay (P)" aria-label="Autoplay">▶</button><button id="bFree" title="Free look (L)">⌖<span class="lbl"> Free look</span></button><button id="bFs" title="Fullscreen (F)" aria-label="Fullscreen">⛶</button></div>`);
+ layout();
+ if(GL)buildExtras();
+ const seg=$('#seg');S.forEach((s,i)=>{const e=D.createElement('i');e.title=(i+1)+'. '+s.tip;e.onclick=()=>go(i);seg.appendChild(e)});
+ $('#bPrev').onclick=()=>go(idx-1);$('#bNext').onclick=()=>go(idx+1);$('#bAuto').onclick=()=>setAuto(!auto);$('#bFree').onclick=toggleFree;$('#bFs').onclick=fs;
+ D.addEventListener('keydown',e=>{if(e.metaKey||e.ctrlKey||e.altKey)return;const k=e.key;
+  if(k==='ArrowRight'||k==='PageDown'||k===' '||k==='Enter'){e.preventDefault();go(idx+1)}
+  else if(k==='ArrowLeft'||k==='PageUp'||k==='Backspace'){e.preventDefault();go(idx-1)}
+  else if(k==='Home')go(0);else if(k==='End')go(S.length-1);
+  else if(k==='f'||k==='F')fs();else if(k==='p'||k==='P')setAuto(!auto);else if(k==='l'||k==='L')toggleFree();
+  else if(k==='Escape'&&FREE){exitFree();go(idx)}});
+ let sx=null,sy=null;box.addEventListener('touchstart',e=>{if(FREE||e.target.closest('#card,#bar'))return;sx=e.touches[0].clientX;sy=e.touches[0].clientY},{passive:true});
+ box.addEventListener('touchend',e=>{if(sx==null)return;const dx=e.changedTouches[0].clientX-sx,dy=e.changedTouches[0].clientY-sy;sx=null;if(Math.abs(dx)>60&&Math.abs(dx)>Math.abs(dy)*1.5)go(dx<0?idx+1:idx-1)},{passive:true});
+ addEventListener('resize',()=>{if(!busy)layout()});D.addEventListener('fullscreenchange',layout);D.addEventListener('webkitfullscreenchange',layout);let mt=null;D.addEventListener('mousemove',()=>{B.classList.add('showbar');clearTimeout(mt);mt=setTimeout(()=>B.classList.remove('showbar'),2500)});
+ go(0);
+ if(boot){setTimeout(()=>{boot.style.opacity=0;setTimeout(()=>boot.remove(),900)},500)}}
+addEventListener('load',()=>setTimeout(initDeck,0));
+})();
+
+</script></body></html>
